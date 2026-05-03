@@ -1,34 +1,61 @@
-# Prompt Wars: Election Assistant
+# Prompt Wars: Bharat Vote Assistant
 
-This is a modern, responsive web application designed for the **Google Prompt Wars** challenge. It serves as an interactive Election Assistant to help users understand the election process, timelines, and steps in an easy-to-follow way.
+Welcome to the **Bharat Vote Assistant**, a modern, responsive, and highly secure web application designed for the **Google Prompt Wars** challenge. This project serves as a dynamic, interactive guide to help citizens seamlessly navigate the Indian Electoral System.
 
-## Overview
+**Live Demo:** [https://bharat-vote-pw-2026.web.app](https://bharat-vote-pw-2026.web.app)
 
-The Election Assistant provides citizens with a clear, visual timeline of the election process (from voter registration to election day). It features a sleek, dark-mode, glassmorphic UI built with **React** and **Vite**. 
+---
 
-A core feature is the **Smart Assistant Chatbot** powered by the **Google Gemini API**, which acts as a dynamic guide to answer context-specific questions about voting rules, deadlines, and procedures.
+## 🎯 Specialization & Core Features
 
-### Chosen Vertical
-**Educational / Civic Engagement**: Guiding users through the complex electoral process via conversational AI and clear visual timelines.
+This project focuses on the **Educational / Civic Engagement** vertical, taking the persona of a secure, high-trust AI consultant specifically tuned to the Indian electoral process.
 
-### Approach and Logic
-- **Modern UI/UX**: Implemented a responsive design using vanilla CSS with premium aesthetics (dark mode, glassmorphism, glowing gradients, micro-animations). This ensures a highly engaging user experience.
-- **Dynamic Assistant**: Integrated `@google/genai` to handle user inquiries dynamically. The chatbot uses a system prompt to stay neutral, factual, and informative about civic duties.
-- **Component-Driven**: Built using React for modularity and maintainability (e.g., `Timeline`, `SmartAssistant` components).
+### 1. The 'Verified Mode' Authentication Logic
+The assistant operates dynamically based on user trust:
+- **General Mode:** Answers basic questions about voting rights.
+- **Verified Mode:** Activated when the user inputs a 10-digit EPIC (Voter ID) or 12-digit Aadhaar. The assistant instantly shifts to providing personalized checklists and securely masks sensitive ID data (e.g., `ABCXXXX123`) to ensure absolute data privacy.
 
-### How It Works
-1. **Visual Guide**: Users are greeted with an interactive timeline of key election dates.
-2. **Contextual Help**: Users can open the floating Assistant Widget at the bottom right to ask specific questions. 
-3. **Gemini Integration**: The app sends the chat history to the Gemini model to provide accurate, conversational responses regarding the election.
+### 2. Form Navigator & BLO Localization
+The assistant serves as an interactive navigator for the National Voter's Service Portal (NVSP):
+- Accurately guides users to **Form 6** (New Voter), **Form 7** (Deletion), and **Form 8** (Correction).
+- Emphasizes grassroots localization by educating users on finding their **Booth Level Officer (BLO)** and uses regional terms (e.g., *Vaku-Chavadi* for Polling Booths).
+
+### 3. EVM & VVPAT Visualizer
+To build trust in the voting mechanics, the application includes:
+- A custom-built, responsive CSS illustration of an **Electronic Voting Machine (EVM)** and a **VVPAT machine**.
+- The VVPAT window features a CSS animation demonstrating the 7-second paper slip verification process.
+- Detailed step-by-step timeline of the election phases, culminating in the "Counting & Results" day.
+
+### 4. Election Day Troubleshooting & KYC
+The assistant is pre-trained with strict guardrails to handle real-world booth issues:
+- Instructions for **Tendered Ballots** (if someone else voted in their name) and **Challenge Votes** (Section 49A).
+- Educates voters on **Candidate KYC**, explaining how to access candidate affidavits regarding financial assets and criminal records, while remaining strictly non-partisan.
+
+---
+
+## 🛠 Approach and Technology Stack
+
+- **Frontend:** React + Vite
+- **Styling:** Premium Vanilla CSS (Zero Tailwind/Bootstrap to ensure custom, lightweight design). Features dark mode, glassmorphism, animated gradients, and custom scrollbars.
+- **AI Integration:** Google Gemini API (`@google/genai`) configured with a highly specific system prompt and conversational memory.
+- **Hosting:** Firebase Hosting, deployed directly from the `dist` build directory.
+- **Size Optimization:** The entire built application is roughly ~300KB, well under the 10 MB limit.
+
+---
+
+## 🚀 How It Works
+
+1. **Visual Guide:** Users are greeted with an interactive 5-step timeline of key election dates (Registration -> KYC -> Finding BLO -> Election Day -> Results).
+2. **Quick Actions:** Responsive suggestion buttons ("Form 6 Registration", "Find my BLO", "Verify VVPAT") allow users to instantly query the assistant without typing.
+3. **Gemini Integration:** The chat history and user context are sent to the Gemini model to provide accurate, conversational responses regarding the election, governed by strict neutrality rules.
 
 ### Assumptions Made
 - Users have basic internet connectivity and use modern web browsers.
-- The default timeline focuses on a generalized election process (which can be customized to a specific state or country).
 - A valid Gemini API key will be provided in the environment variables to fully enable the smart assistant feature.
 
 ---
 
-## Getting Started
+## 💻 Getting Started (Local Development)
 
 ### Prerequisites
 - Node.js (v18 or higher)
@@ -51,18 +78,6 @@ A core feature is the **Smart Assistant Chatbot** powered by the **Google Gemini
    ```bash
    npm run dev
    ```
-
-4. Build for production:
-   ```bash
-   npm run build
-   ```
-
-## Requirements Checklist
-- [x] Repository size < 10 MB (Currently ~300KB)
-- [x] Modern, secure, fully device responsive website
-- [x] Meaningful integration of Google Services (Gemini API)
-- [x] Single branch repository (main)
-- [x] Clean and maintainable code structure
 
 ---
 *Built with ❤️ for Google Prompt Wars*
