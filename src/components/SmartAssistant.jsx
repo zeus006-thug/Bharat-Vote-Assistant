@@ -44,21 +44,22 @@ export default function SmartAssistant() {
   };
 
   return (
-    <div className="assistant-widget">
+    <div className="assistant-widget" aria-label="Smart Assistant Widget">
       {isOpen && (
-        <div className="chat-window glass-panel">
-          <div className="chat-header">
-            <MessageSquare size={20} color="var(--accent-primary)" />
-            <h3>Bharat Vote Assistant</h3>
+        <section className="chat-window glass-panel" role="dialog" aria-labelledby="chat-title" aria-modal="true">
+          <header className="chat-header">
+            <MessageSquare size={20} color="var(--accent-primary)" aria-hidden="true" />
+            <h3 id="chat-title">Bharat Vote Assistant</h3>
             <button 
               onClick={() => setIsOpen(false)}
+              aria-label="Close chat assistant"
               style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', marginLeft: 'auto' }}
             >
-              <X size={20} />
+              <X size={20} aria-hidden="true" />
             </button>
-          </div>
+          </header>
           
-          <div className="chat-messages">
+          <div className="chat-messages" aria-live="polite" role="log">
             {messages.map((msg, index) => (
               <div key={index} className={`message ${msg.role}`}>
                 {msg.content.split('\n').map((line, i) => (
@@ -81,7 +82,7 @@ export default function SmartAssistant() {
             <button className="quick-action-btn" onClick={(e) => handleSend(e, "Explain VVPAT verification")}>Verify VVPAT</button>
           </div>
 
-          <form className="chat-input-container" onSubmit={(e) => handleSend(e)}>
+          <form className="chat-input-container" onSubmit={(e) => handleSend(e)} aria-label="Chat input form">
             <input
               type="text"
               className="chat-input"
@@ -89,17 +90,18 @@ export default function SmartAssistant() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               disabled={isLoading}
+              aria-label="Message input"
             />
-            <button type="submit" className="send-btn" disabled={!input.trim() || isLoading}>
-              <Send size={18} />
+            <button type="submit" className="send-btn" disabled={!input.trim() || isLoading} aria-label="Send message">
+              <Send size={18} aria-hidden="true" />
             </button>
           </form>
-        </div>
+        </section>
       )}
 
       {!isOpen && (
-        <button className="chat-toggle-btn" onClick={() => setIsOpen(true)}>
-          <MessageSquare size={28} />
+        <button className="chat-toggle-btn" onClick={() => setIsOpen(true)} aria-label="Open chat assistant" aria-expanded="false">
+          <MessageSquare size={28} aria-hidden="true" />
         </button>
       )}
     </div>

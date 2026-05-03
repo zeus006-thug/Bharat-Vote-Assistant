@@ -42,8 +42,8 @@ const timelineSteps = [
 
 // Visual component for EVM & VVPAT
 const EvmVisual = () => (
-  <div className="evm-visual-container">
-    <div className="evm-machine">
+  <div className="evm-visual-container" role="img" aria-label="Illustration of Electronic Voting Machine and VVPAT">
+    <div className="evm-machine" aria-hidden="true">
       <div className="evm-screen">Ready</div>
       <div className="evm-buttons">
         <div className="evm-btn-row"><div className="evm-blue-btn"></div><div className="evm-label">Cand 1</div></div>
@@ -51,7 +51,7 @@ const EvmVisual = () => (
         <div className="evm-btn-row"><div className="evm-blue-btn"></div><div className="evm-label">NOTA</div></div>
       </div>
     </div>
-    <div className="vvpat-machine">
+    <div className="vvpat-machine" aria-hidden="true">
       <div className="vvpat-indicator">VVPAT</div>
       <div className="vvpat-window">
         <div className="vvpat-slip">
@@ -65,19 +65,19 @@ const EvmVisual = () => (
 
 export default function Timeline() {
   return (
-    <section className="timeline-section">
-      <h2 className="timeline-title">Election Timeline</h2>
-      <div className="timeline-grid">
+    <section className="timeline-section" aria-labelledby="timeline-heading">
+      <h2 id="timeline-heading" className="timeline-title">Election Timeline</h2>
+      <div className="timeline-grid" role="list">
         {timelineSteps.map((step) => (
-          <div key={step.id} className="timeline-card glass-panel">
-            <div className="timeline-icon-wrap">
+          <article key={step.id} className="timeline-card glass-panel" role="listitem" tabIndex={0}>
+            <div className="timeline-icon-wrap" aria-hidden="true">
               <step.icon size={24} />
             </div>
             <span className="timeline-date">{step.date}</span>
             <h3>{step.title}</h3>
             <p>{step.description}</p>
             {step.hasVisual && <EvmVisual />}
-          </div>
+          </article>
         ))}
       </div>
     </section>
