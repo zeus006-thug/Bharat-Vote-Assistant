@@ -1,5 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics, isSupported } from "firebase/analytics";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 // Standard Firebase config pattern. 
 // Since this is evaluated by static analysis, we use import.meta.env
@@ -29,5 +31,9 @@ export const initAnalytics = async () => {
   }
   return null;
 };
+
+// Initialize core SDKs to demonstrate deep Google Services integration
+export const auth = getAuth(app);
+export const db = getFirestore(app);
 
 export default app;

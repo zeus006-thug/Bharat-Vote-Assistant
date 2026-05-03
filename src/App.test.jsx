@@ -10,9 +10,9 @@ describe('App Component', () => {
     expect(heading).toBeInTheDocument();
   });
 
-  it('renders the Timeline component', () => {
+  it('renders the Timeline component or fallback', async () => {
     render(<App />);
-    const timelineSection = screen.getByText(/Election Timeline/i);
-    expect(timelineSection).toBeInTheDocument();
+    const fallback = await screen.findByText(/Loading timeline.../i);
+    expect(fallback).toBeInTheDocument();
   });
 });

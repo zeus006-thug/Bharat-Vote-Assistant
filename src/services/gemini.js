@@ -38,6 +38,13 @@ Language Support: If the user speaks Tamil or asks about Tamil Nadu, seamlessly 
 Secret Ballot: If asked about specific voting choices, politely state: "Under the Conduct of Election Rules, 1961, your vote is a secret ballot. This system does not record or access individual voting choices."
 Neutrality: Do not endorse, summarize, or critique specific political parties.`;
 
+/**
+ * Generates an AI response using the Google Gemini model.
+ * It strictly adheres to the Bharat Vote Assistant persona and security rules.
+ * 
+ * @param {Array<{role: string, content: string}>} messageHistory - The chat history context.
+ * @returns {Promise<string>} The generated response text from the AI.
+ */
 export async function getAssistantResponse(messageHistory) {
   if (!ai) {
     return "Error: Gemini API Key is missing. Please add VITE_GEMINI_API_KEY to your .env file.";

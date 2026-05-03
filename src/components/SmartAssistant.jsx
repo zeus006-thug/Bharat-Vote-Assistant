@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Loader2 } from 'lucide-react';
 import { getAssistantResponse } from '../services/gemini';
+import DOMPurify from 'dompurify';
 
 export default function SmartAssistant() {
   const [isOpen, setIsOpen] = useState(false);
@@ -63,7 +64,7 @@ export default function SmartAssistant() {
             {messages.map((msg, index) => (
               <div key={index} className={`message ${msg.role}`}>
                 {msg.content.split('\n').map((line, i) => (
-                  <p key={i}>{line}</p>
+                  <p key={i}>{DOMPurify.sanitize(line)}</p>
                 ))}
               </div>
             ))}

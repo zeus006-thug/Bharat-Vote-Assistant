@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import './App.css';
-import Timeline from './components/Timeline';
-import SmartAssistant from './components/SmartAssistant';
+
+const Timeline = lazy(() => import('./components/Timeline'));
+const SmartAssistant = lazy(() => import('./components/SmartAssistant'));
 
 function App() {
   return (
@@ -12,10 +13,14 @@ function App() {
       </header>
 
       <main>
-        <Timeline />
+        <Suspense fallback={<div style={{textAlign: 'center', padding: '2rem'}}>Loading timeline...</div>}>
+          <Timeline />
+        </Suspense>
       </main>
 
-      <SmartAssistant />
+      <Suspense fallback={null}>
+        <SmartAssistant />
+      </Suspense>
     </div>
   );
 }

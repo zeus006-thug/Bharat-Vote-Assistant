@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Calendar, UserPlus, FileSignature, CheckCircle, BarChart3, Box } from 'lucide-react';
 
 const timelineSteps = [
@@ -41,7 +41,7 @@ const timelineSteps = [
 ];
 
 // Visual component for EVM & VVPAT
-const EvmVisual = () => (
+const EvmVisual = memo(() => (
   <div className="evm-visual-container" role="img" aria-label="Illustration of Electronic Voting Machine and VVPAT">
     <div className="evm-machine" aria-hidden="true">
       <div className="evm-screen">Ready</div>
@@ -61,9 +61,9 @@ const EvmVisual = () => (
       </div>
     </div>
   </div>
-);
+));
 
-export default function Timeline() {
+const Timeline = memo(function Timeline() {
   return (
     <section className="timeline-section" aria-labelledby="timeline-heading">
       <h2 id="timeline-heading" className="timeline-title">Election Timeline</h2>
@@ -82,4 +82,6 @@ export default function Timeline() {
       </div>
     </section>
   );
-}
+});
+
+export default Timeline;
