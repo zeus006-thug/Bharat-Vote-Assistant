@@ -458,8 +458,8 @@ function addMessageBubble(text, sender) {
   
   // Format bold structures and clean line breaks securely
   const lines = text.split('\n');
-  lines.forEach((line, idx) => {
-    let formattedText = line;
+  lines.forEach((line) => {
+    const formattedText = line;
     const boldRegex = /\*\*(.*?)\*\*/g;
     
     // Replace **bold** tags carefully in text context

@@ -118,7 +118,7 @@ export function calculateFootprint(inputs) {
   const foodTotalTons = foodBaseTons;
 
   // 4. CONSUMPTION & WASTE EMISSIONS
-  let consumptionBaseTons = EMISSION_FACTORS.consumption[data.shoppingHabits] || EMISSION_FACTORS.consumption.moderate;
+  const consumptionBaseTons = EMISSION_FACTORS.consumption[data.shoppingHabits] || EMISSION_FACTORS.consumption.moderate;
   // Calculate recycling offsets
   let recyclingOffsetTons = 0;
   if (Array.isArray(data.recycleItems)) {

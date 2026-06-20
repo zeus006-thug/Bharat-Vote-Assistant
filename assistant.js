@@ -68,7 +68,7 @@ export function getCoachResponse(rawInput, state = {}) {
   let chips = ["Compare benchmarks", "My highest emitter", "Show eco-actions", "General tips"];
 
   // 1. MATCH SYSTEM TRIGGERS & CONTEXT QUESTIONS
-  if (query.includes('hi') || query.includes('hello') || query.includes('hey') || query.includes('start')) {
+  if (/\b(hi|hello|hey|start)\b/.test(query)) {
     reply = `Hello! I'm Eco, your personalized carbon coaching assistant. ${footprint.total > 0 
       ? `I see your annual carbon footprint is estimated at **${footprint.total} tCO2e**. I can help you find high-impact changes to reduce this.` 
       : 'To start, please complete the Carbon Footprint Calculator tab, and I can analyze your lifestyle to give personalized reduction recommendations.'}`;
@@ -151,7 +151,7 @@ export function getDashboardInsights(footprint) {
   }
 
   const insights = [];
-  const { transport, energy, food, consumption } = footprint.breakdown;
+  const { transport, energy, food } = footprint.breakdown;
 
   // Transport insight
   if (transport > 4.0) {

@@ -1,4 +1,5 @@
 import { calculateFootprint, benchmarkFootprint } from './calculator.js';
+import { getCoachResponse, getDashboardInsights } from './assistant.js';
 import assert from 'assert';
 
 console.log("=== EcoPulse Carbon Calculator Unit Tests ===");
@@ -64,7 +65,40 @@ try {
   assert.strictEqual(highBenchmark.badgeColor, 'danger');
   console.log("✅ High Footprint benchmark rating matches: High Impact");
 
-  console.log("\n🎉 ALL TESTS PASSED SUCCESSFULLY! Math logic validated.");
+  // Test case 4: Assistant getCoachResponse test
+  const coachWelcome = getCoachResponse('hello', { footprint: { total: 0 } });
+  assert.ok(coachWelcome.reply.includes("Eco"), "Coach response should mention Eco");
+  assert.ok(coachWelcome.chips.length > 0, "Coach should return suggestion chips");
+  console.log("✅ Coach greeting response validated");
+
+  const coachEmitter = getCoachResponse('highest emitter', {
+    footprint: { total: 10, breakdown: { transport: 6, energy: 2, food: 1, consumption: 1 } }
+  });
+  assert.ok(coachEmitter.reply.toLowerCase().includes("transport"), "Highest emitter response should identify transport");
+  console.log("✅ Coach emitter analysis validated");
+
+  // Test case 5: Assistant getDashboardInsights test
+  const emptyInsights = getDashboardInsights({ total: 0 });
+  assert.strictEqual(emptyInsights[0].type, 'info');
+  assert.ok(emptyInsights[0].title.includes("Incomplete"), "Empty profile should prompt for calculations");
+  console.log("✅ Empty footprint insights validated");
+
+  const highEnergyInsights = getDashboardInsights({
+    total: 12,
+    breakdown: { transport: 1, energy: 6, food: 1, consumption: 4 }
+  });
+  const energyCrit = highEnergyInsights.find(i => i.title === "Energy Draw Detected");
+  assert.ok(energyCrit, "Should produce energy alert insight");
+  assert.strictEqual(energyCrit.type, "critical");
+  console.log("✅ High energy consumption insights validated");
+
+  // Test case 6: Math Engine Default Fallback test
+  const fallbackResult = calculateFootprint({});
+  assert.strictEqual(typeof fallbackResult.total, 'number');
+  assert.ok(fallbackResult.total > 0, "Fallback calculation should use defaults and return positive footprint");
+  console.log("✅ Default calculation fallbacks validated");
+
+  console.log("\n🎉 ALL TESTS PASSED SUCCESSFULLY! Math and assistant logic validated.");
 } catch (error) {
   console.error("❌ Test Validation Failed:", error.message);
   process.exit(1);
