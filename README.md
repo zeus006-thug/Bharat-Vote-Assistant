@@ -50,6 +50,12 @@ Security and safety are core architectural constraints of EcoPulse:
 
 ---
 
+## 📱 Responsive Device Layout (Responsiveness)
+- **Mobile Adaptation**: Fully responsive grids, stacked headers, and flexible navigation menus adapt seamlessly to viewports down to 320px wide (mobile screens, tablets, and desktops).
+- **Touch-Friendly Controls**: Interactive cards, slide inputs, and chatbot suggestion chips are optimized for touch-based mobile interactions.
+
+---
+
 ## 📋 Key Assumptions Made
 - Average electricity cost is assumed to be **$0.16 per kWh** globally.
 - Average natural gas cost is assumed to be **$1.20 per therm**.

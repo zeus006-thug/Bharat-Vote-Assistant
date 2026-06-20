@@ -1052,3 +1052,62 @@ footer {
   transform: translateY(0);
 }
 
+/* --- MOBILE RESPONSIVENESS OVERRIDES --- */
+@media (max-width: 768px) {
+  header {
+    height: auto;
+    padding: 1rem 0;
+  }
+  
+  .nav-container {
+    flex-direction: column;
+    gap: 1.25rem;
+    align-items: stretch;
+  }
+  
+  .logo {
+    justify-content: center;
+  }
+  
+  .nav-menu {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  
+  .nav-link {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.75rem;
+  }
+  
+  .nav-container > div[style] {
+    justify-content: center !important;
+    width: 100%;
+  }
+
+  main {
+    padding: 1rem 1rem 4rem;
+  }
+
+  h1 { font-size: 2rem; }
+  h2 { font-size: 1.6rem; }
+  h3 { font-size: 1.3rem; }
+
+  .action-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .chat-panel {
+    min-height: 400px;
+  }
+  
+  .chat-messages {
+    max-height: 380px;
+  }
+  
+  .chart-container {
+    min-height: 200px;
+  }
+}
+
+
