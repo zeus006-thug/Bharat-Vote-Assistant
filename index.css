@@ -618,7 +618,7 @@ main {
   flex-direction: column;
   gap: 1rem;
   border: 1px solid var(--border-color);
-  background: rgba(224, 47, 4%, 0.1);
+  background: hsla(224, 47%, 4%, 0.1);
   border-radius: var(--radius-sm);
   margin-bottom: 1rem;
   min-height: 300px;

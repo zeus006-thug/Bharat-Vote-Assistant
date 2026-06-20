@@ -1,0 +1,13 @@
+{
+  "name": "ecopulse",
+  "version": "1.0.0",
+  "description": "EcoPulse Carbon Footprint Tracker & Assistant",
+  "type": "module",
+  "scripts": {
+    "test": "node test.mjs",
+    "lint": "npx eslint app.js assistant.js calculator.js chart.js sw.js test.mjs"
+  },
+  "devDependencies": {
+    "eslint": "^10.5.0"
+  }
+}
