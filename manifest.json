@@ -1,0 +1,17 @@
+{
+  "name": "EcoPulse Carbon Intelligence",
+  "short_name": "EcoPulse",
+  "description": "Understand, track, and reduce your carbon footprint with a smart sustainability assistant.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#040b11",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

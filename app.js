@@ -33,6 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initWizard();
   initAssistant();
   initActionPlanner();
+  initThemeSwitcher();
+  initDataSovereignty();
+  initScenarioSimulator();
   updateBadgeDisplay();
   renderApp();
 });
@@ -589,6 +592,7 @@ function renderApp() {
   renderCharts();
   renderInsights();
   renderCommitmentsSummary();
+  updateSimulation();
 }
 
 function renderCharts() {
@@ -666,5 +670,149 @@ function updateBadgeDisplay() {
     if (state.unlockedBadges.includes(id)) {
       container.classList.add('unlocked');
     }
+  });
+}
+
+// --- BIOME THEME SYSTEM ---
+function initThemeSwitcher() {
+  const themeSelect = document.getElementById('biome-theme-select');
+  if (themeSelect) {
+    const savedTheme = localStorage.getItem('ecopulse_theme') || 'forest';
+    themeSelect.value = savedTheme;
+    applyTheme(savedTheme);
+    
+    themeSelect.addEventListener('change', (e) => {
+      const theme = e.target.value;
+      applyTheme(theme);
+      localStorage.setItem('ecopulse_theme', theme);
+    });
+  }
+}
+
+function applyTheme(themeName) {
+  document.documentElement.className = '';
+  if (themeName !== 'forest') {
+    document.documentElement.classList.add(`theme-${themeName}`);
+  }
+  // Re-draw benchmarks or SVG components
+  renderCharts();
+}
+
+// --- DATA SOVEREIGNTY BACKUP & RESTORE ---
+function initDataSovereignty() {
+  const btnExport = document.getElementById('btn-export-profile');
+  const btnImportTrigger = document.getElementById('btn-import-trigger');
+  const fileInput = document.getElementById('file-import-profile');
+
+  if (btnExport) {
+    btnExport.addEventListener('click', () => {
+      const dataStr = JSON.stringify(state, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ecopulse_profile_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      awardXP(10, 'Exported Backup Profile');
+      renderApp();
+    });
+  }
+
+  if (btnImportTrigger && fileInput) {
+    btnImportTrigger.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const parsed = JSON.parse(event.target.result);
+          
+          if (parsed && typeof parsed === 'object' && parsed.footprint && typeof parsed.footprint.total === 'number') {
+            state = { ...state, ...parsed };
+            saveStateToStorage();
+            updateBadgeDisplay();
+            renderApp();
+            
+            // Notification in chatbot interface
+            addMessageBubble("✅ Local backup profile successfully imported. Welcome back!", 'assistant');
+          } else {
+            alert("Invalid profile file structure. Could not restore backup.");
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Error parsing file. Please select a valid EcoPulse backup JSON.");
+        }
+      };
+      reader.readAsText(file);
+    });
+  }
+}
+
+// --- CARBON REDUCTION SCENARIO SIMULATOR ---
+function initScenarioSimulator() {
+  const rangeTransport = document.getElementById('sim-transport');
+  const rangeEnergy = document.getElementById('sim-energy');
+  const rangeDiet = document.getElementById('sim-diet');
+
+  if (!rangeTransport || !rangeEnergy || !rangeDiet) return;
+
+  const inputs = [rangeTransport, rangeEnergy, rangeDiet];
+  inputs.forEach(input => {
+    input.addEventListener('input', () => {
+      const valSpan = document.getElementById(`${input.id}-val`);
+      if (valSpan) valSpan.textContent = input.value;
+      updateSimulation();
+    });
+  });
+}
+
+function updateSimulation() {
+  const resultEl = document.getElementById('sim-footprint-result');
+  if (!resultEl) return;
+
+  if (!state.footprint || state.footprint.total === 0) {
+    resultEl.textContent = "Calculator Pending";
+    return;
+  }
+
+  const transportReductionPct = Number(document.getElementById('sim-transport').value) / 100;
+  const energyReductionPct = Number(document.getElementById('sim-energy').value) / 100;
+  const dietVegetarianDays = Number(document.getElementById('sim-diet').value);
+
+  // Math simulation logic
+  const simTransport = state.footprint.breakdown.transport * (1 - transportReductionPct);
+  const simEnergy = state.footprint.breakdown.energy * (1 - energyReductionPct);
+  
+  const currentFoodVal = state.footprint.breakdown.food;
+  const dietType = state.userInputs.dietType || 'averageMeat';
+  
+  let simFood = currentFoodVal;
+  if (dietType !== 'vegan' && dietType !== 'vegetarian' && dietVegetarianDays > 0) {
+    const savingsPerDay = Math.max(0, (currentFoodVal - 1.0) / 7);
+    simFood = Math.max(1.0, currentFoodVal - (savingsPerDay * dietVegetarianDays));
+  }
+
+  const simConsumption = state.footprint.breakdown.consumption;
+  const totalSimulated = simTransport + simEnergy + simFood + simConsumption;
+  
+  resultEl.textContent = `${totalSimulated.toFixed(1)} t`;
+}
+
+// --- PWA SERVICE WORKER REGISTRATION ---
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('[EcoPulse PWA] ServiceWorker active:', reg.scope))
+      .catch(err => console.error('[EcoPulse PWA] ServiceWorker registration failed:', err));
   });
 }

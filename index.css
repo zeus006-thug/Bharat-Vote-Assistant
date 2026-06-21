@@ -963,3 +963,92 @@ footer {
   font-size: 0.85rem;
   color: var(--text-muted);
 }
+
+/* --- THEME BIOME SYSTEM --- */
+.theme-ocean {
+  --primary: hsl(199, 89%, 48%);
+  --primary-glow: hsla(199, 89%, 48%, 0.25);
+  --primary-hover: hsl(199, 89%, 55%);
+  --accent: hsl(142, 72%, 40%);
+  --accent-glow: hsla(142, 72%, 40%, 0.2);
+  --accent-hover: hsl(142, 72%, 48%);
+  background-image: 
+    radial-gradient(circle at 10% 20%, hsla(199, 89%, 15%, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, hsla(224, 47%, 18%, 0.25) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, hsla(142, 72%, 10%, 0.05) 0%, transparent 60%);
+}
+
+.theme-geothermal {
+  --primary: hsl(0, 84%, 60%);
+  --primary-glow: hsla(0, 84%, 60%, 0.25);
+  --primary-hover: hsl(0, 84%, 65%);
+  --accent: hsl(45, 100%, 50%);
+  --accent-glow: hsla(45, 100%, 50%, 0.2);
+  --accent-hover: hsl(45, 100%, 55%);
+  background-image: 
+    radial-gradient(circle at 10% 20%, hsla(0, 84%, 15%, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, hsla(224, 47%, 18%, 0.25) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, hsla(45, 100%, 10%, 0.05) 0%, transparent 60%);
+}
+
+/* --- TOOLTIP OVERLAY --- */
+.tooltip-container {
+  position: relative;
+  display: inline-block;
+  overflow: visible;
+}
+
+.info-trigger {
+  background: hsla(215, 20%, 30%, 0.4);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.info-trigger:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+
+.tooltip-box {
+  visibility: hidden;
+  width: 260px;
+  background-color: var(--bg-surface-elevated);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  text-align: left;
+  border-radius: var(--radius-sm);
+  padding: 0.8rem 1rem;
+  position: absolute;
+  z-index: 1000;
+  right: 0;
+  top: 130%;
+  opacity: 0;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  font-family: var(--font-body);
+  font-weight: 400;
+  box-shadow: var(--shadow-lg);
+  transition: opacity 0.3s ease, transform 0.2s ease;
+  transform: translateY(-5px);
+  pointer-events: none;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.tooltip-container:hover .tooltip-box,
+.tooltip-container:focus-within .tooltip-box {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+}
+

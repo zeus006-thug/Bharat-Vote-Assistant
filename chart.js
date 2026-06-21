@@ -5,10 +5,10 @@
 
 // Category styles & colors matching CSS theme variables
 const CATEGORY_STYLES = {
-  transport: { label: 'Transport', color: 'hsl(199, 89%, 48%)', icon: '🚗' }, // Info blue
-  energy: { label: 'Energy', color: 'hsl(45, 100%, 50%)', icon: '⚡' },     // Accent Gold
-  food: { label: 'Diet & Food', color: 'hsl(142, 72%, 40%)', icon: '🥗' },  // Primary Green
-  consumption: { label: 'Shopping', color: 'hsl(0, 84%, 60%)', icon: '🛍️' } // Danger Red
+  transport: { label: 'Transport', color: 'var(--info)', icon: '🚗' }, // Info blue
+  energy: { label: 'Energy', color: 'var(--accent)', icon: '⚡' },     // Accent Gold
+  food: { label: 'Diet & Food', color: 'var(--primary)', icon: '🥗' },  // Primary Green
+  consumption: { label: 'Shopping', color: 'var(--danger)', icon: '🛍️' } // Danger Red
 };
 
 /**
@@ -179,10 +179,10 @@ export function renderBenchmarkChart(containerId, userTotal) {
   container.innerHTML = '';
 
   const benchmarks = [
-    { key: 'target', label: 'Paris Target', value: 2.0, color: 'hsl(142, 72%, 40%)' }, // Green
-    { key: 'global', label: 'Global Avg', value: 4.5, color: 'hsl(199, 89%, 48%)' },   // Blue
-    { key: 'user', label: 'You (EcoPulse)', value: userTotal, color: 'hsl(45, 100%, 50%)' }, // Yellow
-    { key: 'usa', label: 'US Average', value: 16.0, color: 'hsl(0, 84%, 60%)' }       // Red
+    { key: 'target', label: 'Paris Target', value: 2.0, color: 'var(--primary)' }, // Primary Green variable
+    { key: 'global', label: 'Global Avg', value: 4.5, color: 'var(--info)' },      // Info Blue variable
+    { key: 'user', label: 'You (EcoPulse)', value: userTotal, color: 'var(--accent)' }, // Accent Gold variable
+    { key: 'usa', label: 'US Average', value: 16.0, color: 'var(--danger)' }        // Danger Red variable
   ];
 
   // Screen reader table for accessibility
