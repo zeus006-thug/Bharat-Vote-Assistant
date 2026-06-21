@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoPulse - Carbon Footprint Tracker & Coach</title>
+  
+  <!-- High Security Content Security Policy (CSP) -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:;">
+  
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+  <!-- --- ACCESSIBILITY SKIP LINK --- -->
+  <a href="#main-content" style="position: absolute; left: -9999px; top: 0; background: var(--primary); color: var(--text-on-primary); padding: 0.5rem 1rem; z-index: 1000;" onfocus="this.style.left='0px';" onblur="this.style.left='-9999px';">Skip to Content</a>
+
+  <!-- --- HEADER & NAVIGATION --- -->
+  <header>
+    <div class="nav-container">
+      <a href="#" class="logo" aria-label="EcoPulse Home">
+        <div class="logo-icon" aria-hidden="true">E</div>
+        EcoPulse
+      </a>
+      
+      <nav aria-label="Main navigation menu">
+        <ul class="nav-menu">
+          <li><button class="nav-link active" data-view="dashboard" id="nav-btn-dashboard" type="button">Dashboard</button></li>
+          <li><button class="nav-link" data-view="calculator" id="nav-btn-calculator" type="button">Calculator</button></li>
+          <li><button class="nav-link" data-view="coach" id="nav-btn-coach" type="button">Smart Coach</button></li>
+          <li><button class="nav-link" data-view="planner" id="nav-btn-planner" type="button">Action Planner</button></li>
+          <li><button class="nav-link" data-view="rewards" id="nav-btn-rewards" type="button">Badges</button></li>
+        </ul>
+      </nav>
+
+      <!-- Points system display -->
+      <div class="badge" aria-label="Your experience points total" style="background: hsla(142, 72%, 40%, 0.15); border-color: var(--border-active); color: var(--text-primary); font-family: var(--font-display);">
+        ✨ <span id="user-points-val">0</span> XP
+      </div>
+    </div>
+  </header>
+
+  <!-- --- MAIN CONTENT --- -->
+  <main id="main-content">
+
+    <!-- ================= DASHBOARD VIEW ================= -->
+    <section id="dashboard-view" class="view-panel active" aria-labelledby="dash-title">
+      <h2 id="dash-title" style="margin-bottom: 2rem; font-size: 2.2rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span>🌱</span> Personal Carbon Intelligence
+      </h2>
+      
+      <div class="dash-grid">
+        <!-- 1. Carbon Score Card -->
+        <div class="card metric-card">
+          <h3 class="card-title" style="font-size: 1.1rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 1rem;">
+            Net Carbon Footprint
+          </h3>
+          <div class="metric-val" id="score-numeric-val">--</div>
+          <div class="metric-unit">Metric Tons CO2e / Year</div>
+          <span class="badge" id="score-classification-badge" aria-live="polite">No Data</span>
+          <p id="benchmarking-details-desc" style="font-size: 0.85rem; margin-top: 1.5rem; color: var(--text-secondary); text-align: left;"></p>
+        </div>
+
+        <!-- 2. Source Breakdown Chart (Donut) -->
+        <div class="card card-wide" style="display: flex; flex-direction: column;">
+          <h3 class="card-title">📉 Footprint Category Breakdown</h3>
+          <div class="chart-container" id="donut-chart-target" aria-label="Carbon emission categories donut chart">
+            <div style="color: var(--text-muted); font-size: 0.95rem; text-align: center;">
+              No data collected. Navigate to the <strong>Calculator</strong> tab to determine your profile!
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Comparison Benchmark Chart (Bar) -->
+        <div class="card" style="display: flex; flex-direction: column;">
+          <h3 class="card-title">⚖️ Carbon Benchmarks</h3>
+          <div class="chart-container" id="benchmark-chart-target" aria-label="Carbon footprint vs global averages comparison bar chart">
+            <div style="color: var(--text-muted); font-size: 0.95rem; text-align: center;">
+              Complete the calculator step to compare your emissions.
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Top Commitments Summary -->
+        <div class="card card-wide" style="display: flex; flex-direction: column;">
+          <h3 class="card-title" style="justify-content: space-between;">
+            <span>📋 Active Eco Commitments</span>
+            <span class="badge" style="background: var(--primary-glow); border-color: var(--primary); color: var(--text-primary);"><span id="committed-actions-count">0</span> Active</span>
+          </h3>
+          <ul id="commitments-list-items" style="display: flex; flex-direction: column; gap: 0.75rem; padding: 0;">
+            <li style="color: var(--text-muted); font-size: 0.9rem; list-style: none;">No current active commitments. Browse the Action Planner!</li>
+          </ul>
+        </div>
+
+        <!-- 5. Coach Insights -->
+        <div class="card card-full" style="display: flex; flex-direction: column;">
+          <h3 class="card-title">💡 Personalized Coach Recommendations</h3>
+          <div class="coaching-insights" id="coach-insights-target">
+            <div class="insight-item">
+              <div class="insight-text">
+                <div class="insight-header">Carbon Calculator Pending</div>
+                To receive tailored sustainability advice, please complete your profiling calculations.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= CALCULATOR VIEW ================= -->
+    <section id="calculator-view" class="view-panel" aria-labelledby="calc-title">
+      <div class="calc-container">
+        <!-- Wizard Form -->
+        <div class="card calc-wizard">
+          <div class="progress-track" aria-label="Wizard progress track">
+            <div class="progress-bar" id="wizard-progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+
+          <form id="footprint-wizard-form" onsubmit="return false;">
+            <!-- Step 1: Transport -->
+            <div class="calc-step active" data-step="1">
+              <h3 class="step-title">Transportation Commuting</h3>
+              <p class="step-desc">Help us estimate your emissions from transit and air travel.</p>
+              
+              <div class="form-group">
+                <span class="form-label">Primary Daily Commute Method</span>
+                <div class="radio-grid" role="radiogroup" aria-label="Commute vehicle type options">
+                  <label class="radio-card selected">
+                    <input type="radio" name="carType" value="gasolineCar" checked>
+                    <span class="radio-icon" aria-hidden="true">🚗</span>
+                    <span class="radio-label">Gasoline Car</span>
+                  </label>
+                  <label class="radio-card">
+                    <input type="radio" name="carType" value="electricCar">
+                    <span class="radio-icon" aria-hidden="true">🔋</span>
+                    <span class="radio-label">Electric Vehicle</span>
+                  </label>
+                  <label class="radio-card">
+                    <input type="radio" name="carType" value="hybridCar">
+                    <span class="radio-icon" aria-hidden="true">🔌</span>
+                    <span class="radio-label">Hybrid Car</span>
+                  </label>
+                  <label class="radio-card">
+                    <input type="radio" name="carType" value="motorbike">
+                    <span class="radio-icon" aria-hidden="true">🏍️</span>
+                    <span class="radio-label">Motorbike</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="carMiles" class="form-label">Annual Commuting Mileage (Car/Motorbike)</label>
+                <div class="range-container">
+                  <input type="range" class="range-control" id="carMiles" min="0" max="30000" step="500" value="8000">
+                  <span class="range-val" id="carMiles-val">8000</span>
+                  <span style="font-size: 0.9rem; color: var(--text-muted);">mi</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="transitMiles" class="form-label">Annual Public Transit Mileage (Bus/Train)</label>
+                <div class="range-container">
+                  <input type="range" class="range-control" id="transitMiles" min="0" max="15000" step="250" value="1000">
+                  <span class="range-val" id="transitMiles-val">1000</span>
+                  <span style="font-size: 0.9rem; color: var(--text-muted);">mi</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <span class="form-label">Annual Round-Trip Flights</span>
+                <div style="display: flex; gap: 1rem;">
+                  <div style="flex: 1;">
+                    <label for="flightsShort" style="font-size: 0.8rem; color: var(--text-muted);">Short (&lt; 2h)</label>
+                    <input type="number" id="flightsShort" class="input-control" min="0" max="100" value="2">
+                  </div>
+                  <div style="flex: 1;">
+                    <label for="flightsMedium" style="font-size: 0.8rem; color: var(--text-muted);">Medium (2-6h)</label>
+                    <input type="number" id="flightsMedium" class="input-control" min="0" max="50" value="1">
+                  </div>
+                  <div style="flex: 1;">
+                    <label for="flightsLong" style="font-size: 0.8rem; color: var(--text-muted);">Long (&gt; 6h)</label>
+                    <input type="number" id="flightsLong" class="input-control" min="0" max="20" value="0">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 2: Energy -->
+            <div class="calc-step" data-step="2">
+              <h3 class="step-title">Household Energy</h3>
+              <p class="step-desc">Measure how electricity and gas usage translates to emissions.</p>
+              
+              <div class="form-group">
+                <label for="electricityBill" class="form-label">Average Monthly Electricity Bill ($)</label>
+                <div class="range-container">
+                  <input type="range" class="range-control" id="electricityBill" min="0" max="500" step="10" value="100">
+                  <span class="range-val" id="electricityBill-val">100</span>
+                  <span style="font-size: 0.9rem; color: var(--text-muted);">$</span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="electricityRenewable" class="form-label">Renewable Grid Energy Share (%)</label>
+                <div class="range-container">
+                  <input type="range" class="range-control" id="electricityRenewable" min="0" max="100" step="5" value="0">
+                  <span class="range-val" id="electricityRenewable-val">0</span>
+                  <span style="font-size: 0.9rem; color: var(--text-muted);">%</span>
+                </div>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Select if you pay for green power tariffs or have solar panels installed.</p>
+              </div>
+
+              <div class="form-group">
+                <label for="gasBill" class="form-label">Average Monthly Natural Gas Bill ($)</label>
+                <div class="range-container">
+                  <input type="range" class="range-control" id="gasBill" min="0" max="300" step="10" value="40">
+                  <span class="range-val" id="gasBill-val">40</span>
+                  <span style="font-size: 0.9rem; color: var(--text-muted);">$</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 3: Diet & Food -->
+            <div class="calc-step" data-step="3">
+              <h3 class="step-title">Diet & Food Habits</h3>
+              <p class="step-desc">Agricultural production represents a substantial carbon footprint category.</p>
+              
+              <div class="form-group">
+                <span class="form-label">Primary Dietary Profile</span>
+                <div class="radio-grid" role="radiogroup" aria-label="Dietary option radio selection">
+                  <label class="radio-card">
+                    <input type="radio" name="dietType" value="heavyMeat">
+                    <span class="radio-icon" aria-hidden="true">🥩</span>
+                    <span class="radio-label">High Meat</span>
+                  </label>
+                  <label class="radio-card selected">
+                    <input type="radio" name="dietType" value="averageMeat" checked>
+                    <span class="radio-icon" aria-hidden="true">🍖</span>
+                    <span class="radio-label">Average Mixed</span>
+                  </label>
+                  <label class="radio-card">
+                    <input type="radio" name="dietType" value="lowMeat">
+                    <span class="radio-icon" aria-hidden="true">🍗</span>
+                    <span class="radio-label">Low Meat</span>
+                  </label>
+                  <label class="radio-card">
+                    <input type="radio" name="dietType" value="vegetarian">
+                    <span class="radio-icon" aria-hidden="true">🍳</span>
+                    <span class="radio-label">Vegetarian</span>
+                  </label>
+                  <label class="radio-card">
+                    <input type="radio" name="dietType" value="vegan">
+                    <span class="radio-icon" aria-hidden="true">🌱</span>
+                    <span class="radio-label">Vegan</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <span class="form-label">Wasted Food Habits</span>
+                <div class="radio-grid" role="radiogroup" aria-label="Wasted food radio selection">
+                  <label class="radio-card">
+                    <input type="radio" name="foodWaste" value="low">
+                    <span class="radio-icon" aria-hidden="true">🥗</span>
+                    <span class="radio-label">Minimal Waste</span>
+                  </label>
+                  <label class="radio-card selected">
+                    <input type="radio" name="foodWaste" value="medium" checked>
+                    <span class="radio-icon" aria-hidden="true">🍽️</span>
+                    <span class="radio-label">Average Waste</span>
+                  </label>
+                  <label class="radio-card">
+                    <input type="radio" name="foodWaste" value="high">
+                    <span class="radio-icon" aria-hidden="true">🗑️</span>
+                    <span class="radio-label">Frequent Waste</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 4: Shopping & Waste -->
+            <div class="calc-step" data-step="4">
+              <h3 class="step-title">Shopping & Recycling</h3>
+              <p class="step-desc">Refine estimations based on shopping choices and waste management.</p>
+              
+              <div class="form-group">
+                <span class="form-label">Annual Buying Frequency (Apparel/Electronics)</span>
+                <div class="radio-grid" role="radiogroup" aria-label="Shopping frequency selection">
+                  <label class="radio-card">
+                    <input type="radio" name="shoppingHabits" value="minimalist">
+                    <span class="radio-icon" aria-hidden="true">📦</span>
+                    <span class="radio-label">Minimalist</span>
+                  </label>
+                  <label class="radio-card selected">
+                    <input type="radio" name="shoppingHabits" value="moderate" checked>
+                    <span class="radio-icon" aria-hidden="true">🛍️</span>
+                    <span class="radio-label">Average Buyer</span>
+                  </label>
+                  <label class="radio-card">
+                    <input type="radio" name="shoppingHabits" value="intensive">
+                    <span class="radio-icon" aria-hidden="true">💎</span>
+                    <span class="radio-label">Heavy Buyer</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <span class="form-label">Recycled Household Materials</span>
+                <div class="radio-grid" role="group" aria-label="Recycled household materials checkboxes">
+                  <label class="radio-card check-card">
+                    <input type="checkbox" name="recycleItems" value="paper">
+                    <span class="radio-icon" aria-hidden="true">📰</span>
+                    <span class="radio-label">Paper</span>
+                  </label>
+                  <label class="radio-card check-card">
+                    <input type="checkbox" name="recycleItems" value="plastic">
+                    <span class="radio-icon" aria-hidden="true">🥤</span>
+                    <span class="radio-label">Plastics</span>
+                  </label>
+                  <label class="radio-card check-card">
+                    <input type="checkbox" name="recycleItems" value="glass">
+                    <span class="radio-icon" aria-hidden="true">🍾</span>
+                    <span class="radio-label">Glass</span>
+                  </label>
+                  <label class="radio-card check-card">
+                    <input type="checkbox" name="recycleItems" value="metal">
+                    <span class="radio-icon" aria-hidden="true">🥫</span>
+                    <span class="radio-label">Metal Cans</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Wizard controls -->
+            <div class="calc-nav">
+              <button class="btn btn-secondary" id="prev-step-btn" type="button" disabled>Back</button>
+              <button class="btn btn-secondary" id="next-step-btn" type="button">Continue</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Calculator side information panel -->
+        <div class="calc-sidebar">
+          <div class="card" style="background: radial-gradient(circle at top left, hsla(45, 100%, 10%, 0.15), transparent);">
+            <h3 class="card-title">💡 Why track?</h3>
+            <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1rem;">
+              Understanding your personal ecological footprint allows you to make informed transitions. Small adjustments, like changing lightbulbs or dietary shifts, yield major greenhouse gas cuts when adopted collectively.
+            </p>
+            <h4 style="margin-bottom: 0.5rem; font-size: 1rem; color: var(--text-primary);">Core Math Benchmarks:</h4>
+            <ul style="padding-left: 1.25rem; font-size: 0.85rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 0.5rem;">
+              <li><strong>Transport:</strong> Car fuel variables represent average engine combustion intensities per mile driven.</li>
+              <li><strong>Electricity:</strong> Modeled using regional grid metrics representing generation sources.</li>
+              <li><strong>Diet:</strong> Derived using land-clearing and agricultural chemical emissions statistics.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SMART COACH (ASSISTANT) VIEW ================= -->
+    <section id="coach-view" class="view-panel" aria-labelledby="coach-title">
+      <div class="assistant-layout">
+        <!-- Interactive Chat Panel -->
+        <div class="card chat-panel">
+          <h3 class="card-title">💬 Ask Eco - Carbon Coach</h3>
+          
+          <div class="chat-messages" id="chat-messages-container" role="log" aria-live="polite" aria-label="Chat messages history">
+            <!-- Programmatically injected messages -->
+          </div>
+
+          <!-- Bottom suggest chips -->
+          <div class="chip-container" id="chat-suggestion-chips" aria-label="Suggested chat questions">
+            <button class="chip" type="button">Compare benchmarks</button>
+            <button class="chip" type="button">My highest emitter</button>
+            <button class="chip" type="button">Show eco-actions</button>
+            <button class="chip" type="button">General tips</button>
+          </div>
+
+          <!-- Message entry controls -->
+          <div class="chat-input-area" style="margin-top: 1rem;">
+            <input type="text" id="assistant-input-field" class="chat-input" placeholder="Ask about carbon reduction tips or formulas..." aria-label="Message carbon coach">
+            <button class="btn btn-primary" id="assistant-send-btn" type="button">Send</button>
+          </div>
+        </div>
+
+        <!-- Sidebar dynamic coaching insights summary -->
+        <div class="calc-sidebar">
+          <div class="card">
+            <h3 class="card-title">💡 Contextual Coaching Insights</h3>
+            <div class="coaching-insights" id="coach-insights-sidebar">
+              <div class="insight-item">
+                <div class="insight-text">
+                  <div class="insight-header">Chat Active</div>
+                  Speak to Eco or check suggestion chips to receive immediate carbon coaching.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= ACTION PLANNER VIEW ================= -->
+    <section id="planner-view" class="view-panel" aria-labelledby="planner-title">
+      <div class="calc-container">
+        <!-- Grid of available actions -->
+        <div>
+          <h3 style="margin-bottom: 0.5rem; font-size: 1.8rem;">Browse High-Impact Eco-Actions</h3>
+          <p style="color: var(--text-muted); margin-bottom: 2rem;">Commit to daily habits to lower your projected footprint.</p>
+          
+          <div class="action-grid" id="planner-action-list">
+            <!-- Action cards injected programmatically -->
+          </div>
+        </div>
+
+        <!-- Commitments sidebar tracker -->
+        <div class="commitment-panel">
+          <div class="card">
+            <h3 class="card-title">📋 Active commitments</h3>
+            <ul id="commitments-list-sidebar" style="display: flex; flex-direction: column; gap: 0.75rem; padding: 0;">
+              <!-- Committed list items injected programmatically -->
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= LEADERBOARD / BADGES VIEW ================= -->
+    <section id="rewards-view" class="view-panel" aria-labelledby="rewards-title">
+      <h2 id="rewards-title" style="margin-bottom: 2rem; font-size: 2.2rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span>🏆</span> Achievements & Badges
+      </h2>
+
+      <div class="dash-grid" style="grid-template-columns: repeat(4, 1fr);">
+        <!-- Total XP points display card -->
+        <div class="card" style="grid-column: span 4; display: flex; align-items: center; justify-content: space-between;">
+          <div>
+            <h3 style="margin-bottom: 0.25rem;">Your Sustainability Rank</h3>
+            <p style="color: var(--text-secondary); font-size: 0.95rem;">Commit to and complete actions to earn XP points.</p>
+          </div>
+          <div style="font-size: 3rem; font-family: var(--font-display); font-weight: 800; color: var(--accent); text-shadow: 0 0 20px var(--accent-glow);">
+            <span id="rewards-xp-badge">0</span> XP
+          </div>
+        </div>
+
+        <!-- Badges list grid -->
+        <div class="card" style="grid-column: span 4;">
+          <h3 class="card-title">🌱 Earned Badges</h3>
+          <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Unlock special visual badges by hitting footprint targets and completing eco challenges.</p>
+          
+          <div class="badge-grid">
+            <div class="badge-item" data-badge-id="first-steps" aria-label="First Steps Badge: Complete calculator profiling">
+              <span class="badge-icon" aria-hidden="true">🌱</span>
+              <span class="badge-name">First Steps</span>
+            </div>
+            
+            <div class="badge-item" data-badge-id="carbon-saver" aria-label="Carbon Saver Badge: Commit to an eco-action">
+              <span class="badge-icon" aria-hidden="true">♻️</span>
+              <span class="badge-name">Carbon Saver</span>
+            </div>
+            
+            <div class="badge-item" data-badge-id="eco-warrior" aria-label="Eco Warrior Badge: Get footprint below 4.5 tons">
+              <span class="badge-icon" aria-hidden="true">🛡️</span>
+              <span class="badge-name">Eco Warrior</span>
+            </div>
+            
+            <div class="badge-item" data-badge-id="climate-hero" aria-label="Climate Hero Badge: Meet Paris target of 2.0 tons">
+              <span class="badge-icon" aria-hidden="true">🥇</span>
+              <span class="badge-name">Climate Hero</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- --- FOOTER --- -->
+  <footer>
+    <div class="footer-content">
+      <div class="footer-text">
+        &copy; 2026 EcoPulse Carbon Intelligence. Built for high security, data privacy, and modern sustainability modeling.
+      </div>
+      <div class="footer-text" style="display: flex; gap: 1rem;">
+        <span>MIT License</span>
+        <span>Secure Local storage Mode</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Core JavaScript loading -->
+  <script type="module" src="app.js"></script>
+</body>
+</html>
