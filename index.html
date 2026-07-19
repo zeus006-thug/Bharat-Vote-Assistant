@@ -14,6 +14,39 @@
 </head>
 <body>
 
+  <!-- --- SECURE PORTAL LOGIN SCREEN --- -->
+  <div id="login-portal" class="login-overlay active" role="dialog" aria-modal="true" aria-labelledby="login-title">
+    <div class="card login-container">
+      <div style="text-align:center; margin-bottom:1.5rem;">
+        <span style="font-size:3.5rem; display:block; filter:drop-shadow(0 0 10px var(--primary-glow));">⚽</span>
+        <h2 id="login-title" style="font-size:1.6rem; margin-top:0.5rem; background:linear-gradient(135deg, var(--text-primary) 0%, var(--primary) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-family:var(--font-display);">MetLife Arena Security</h2>
+        <p style="font-size:0.85rem; color:var(--text-muted);">FIFA World Cup 2026 Operational Portal</p>
+      </div>
+
+      <form id="login-form" onsubmit="return false;" style="display:flex; flex-direction:column; gap:1.25rem;">
+        <div class="form-group">
+          <label for="login-email" class="form-label">Authorized Account Email</label>
+          <input type="email" id="login-email" class="input-control" placeholder="e.g. volunteer@fifa.com" required>
+        </div>
+        <div class="form-group">
+          <label for="login-passcode" class="form-label">Secure Access Key / Ticket ID</label>
+          <input type="password" id="login-passcode" class="input-control" placeholder="••••••••" required>
+        </div>
+        
+        <button class="btn btn-primary" id="btn-login-submit" type="button" style="width:100%; padding:0.75rem; margin-top:0.5rem; font-family:var(--font-display); font-weight:700;">🔑 Authenticate System Entry</button>
+      </form>
+
+      <div style="margin-top:1.5rem; border-top:1px solid var(--border-color); padding-top:1.25rem;">
+        <span style="display:block; text-align:center; font-size:0.75rem; color:var(--text-muted); margin-bottom:0.75rem;">DEMO FAST-TRACK GATEWAYS</span>
+        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:0.5rem;">
+          <button class="btn btn-secondary" id="btn-demo-fan" type="button" style="font-size:0.75rem; padding:0.5rem 0.25rem;">🎫 Fan Portal</button>
+          <button class="btn btn-secondary" id="btn-demo-volunteer" type="button" style="font-size:0.75rem; padding:0.5rem 0.25rem;">🛡️ Volunteer</button>
+          <button class="btn btn-secondary" id="btn-demo-organizer" type="button" style="font-size:0.75rem; padding:0.5rem 0.25rem;">📊 Venue Ops</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Accessibility Skip Link -->
   <a href="#main-content" class="skip-link" onfocus="this.style.left='0px';" onblur="this.style.left='-9999px';">Skip to Content</a>
 
@@ -35,22 +68,14 @@
         </ul>
       </nav>
 
-      <!-- Role Switcher, Settings, and XP System -->
+      <!-- Secure Access Controls, Settings, and XP System -->
       <div class="header-controls">
-        <div class="role-selector">
-          <label for="role-theme-select">Role:</label>
-          <select id="role-theme-select" class="select-control" aria-label="Select user role">
-            <option value="fan">🎫 Fan</option>
-            <option value="staff">🛡️ Volunteer / Staff</option>
-            <option value="organizer">📊 Organizer</option>
-          </select>
-        </div>
-        
         <div class="xp-badge" aria-label="Your experience points total">
           ✨ <span id="user-points-val">0</span> XP
         </div>
         
         <button id="btn-settings-open" class="btn btn-icon" type="button" aria-label="Open Settings" title="Gemini API Key Settings">⚙️</button>
+        <button id="btn-portal-logout" class="btn btn-icon" type="button" aria-label="Sign Out" title="Sign Out of Portal" style="font-size: 1.1rem; filter: drop-shadow(0 0 2px var(--primary));">🚪</button>
       </div>
     </div>
   </header>
@@ -324,8 +349,8 @@
           <div class="card">
             <h3 class="card-title">💡 Role Context</h3>
             <p id="chat-role-desc" style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1rem;"></p>
-            <div style="font-size:0.8rem; background: var(--bg-surface-elevated); padding: 1rem; border-radius: var(--radius-sm); border:1px solid var(--border-color);">
-              <strong>Google Gemini Power:</strong> To test genuine generative AI answers, paste your Gemini API key in Settings.
+            <div style="font-size:0.8rem; background: var(--bg-surface-elevated); padding: 1rem; border-radius: var(--radius-sm); border:1px solid var(--border-color); line-height:1.45;">
+              <strong>Google Gemini API Key:</strong> To chat with live GenAI, paste your Gemini Key in Settings. You can get a free key from <a href="https://aistudio.google.com/" target="_blank" style="color:var(--accent); text-decoration:underline; font-weight:600;">Google AI Studio</a>.
             </div>
           </div>
         </div>
@@ -459,10 +484,13 @@
       </div>
       
       <div class="form-group" style="margin-bottom: 1rem;">
-        <label for="settings-gemini-key" class="form-label">Google Gemini API Key</label>
+        <label for="settings-gemini-key" class="form-label" style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+          <span>Google Gemini API Key</span>
+          <a href="https://aistudio.google.com/" target="_blank" style="font-size:0.75rem; color:var(--accent); text-decoration:underline; font-weight:600;">Get Key from AI Studio</a>
+        </label>
         <input type="password" id="settings-gemini-key" class="input-control" placeholder="AIzaSy...">
         <p style="font-size:0.7rem; color:var(--text-muted); margin-top:0.25rem;">
-          Saved solely inside browser local storage. Calls are made directly to Google API endpoints.
+          Saved solely inside browser local storage. Generate a free key at Google AI Studio to run live GenAI.
         </p>
       </div>
 

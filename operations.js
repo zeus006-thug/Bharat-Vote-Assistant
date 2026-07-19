@@ -6,12 +6,12 @@
 // Cryptographic Simulation Secret Key for ticket validation
 const TICKET_VERIFICATION_SALT = "FIFA_WC_2026_AEGIS_SECURE";
 
-// Seat tier partitions sorted by max row boundary
+// Seat tier partitions sorted by max row boundary with privileges
 const TIER_RANGES = [
-  { maxRow: 10, name: "Tier 1 (VIP Courtside)" },
-  { maxRow: 30, name: "Tier 2 (Club Seating)" },
-  { maxRow: 90, name: "Tier 3 (Main Bowl)" },
-  { maxRow: 150, name: "Tier 4 (Upper Deck)" }
+  { maxRow: 15, name: "Tier 1: VIP Executive Suite", privileges: "Club Lounge access, complimentary catering, fast-track checkpoint clearance.", recommendedGate: "Gate A", category: "VIP" },
+  { maxRow: 45, name: "Tier 2: Category 1 Premium", privileges: "Lower bowl seating, 20% concession discounts, dedicated restrooms.", recommendedGate: "Gate B", category: "Premium" },
+  { maxRow: 100, name: "Tier 3: Category 2 Standard", privileges: "Mid-level bowl seating, standard concession access.", recommendedGate: "Gate C", category: "Standard" },
+  { maxRow: 150, name: "Tier 4: Category 3 Upper Deck", privileges: "Upper deck seating, budget concession access.", recommendedGate: "Gate D", category: "Value" }
 ];
 
 /**
@@ -19,22 +19,29 @@ const TIER_RANGES = [
  * Space Complexity: O(1)
  * Time Complexity: O(log N) where N is the number of tier thresholds.
  * @param {number} rowNum - Row number from the seat ticket
- * @returns {string} Tier description name
+ * @returns {Object} Tier configuration object
  */
 export function findSeatTier(rowNum) {
   const row = Number(rowNum);
+  const fallback = {
+    name: "General Admission",
+    privileges: "Standard stadium seating access.",
+    recommendedGate: "Gate A",
+    category: "Standard"
+  };
+
   if (isNaN(row) || row <= 0 || row > 150) {
-    return "Unknown Tier";
+    return fallback;
   }
 
   let low = 0;
   let high = TIER_RANGES.length - 1;
-  let result = "Unknown Tier";
+  let match = TIER_RANGES[TIER_RANGES.length - 1];
 
   while (low <= high) {
     const mid = Math.floor((low + high) / 2);
     if (TIER_RANGES[mid].maxRow >= row) {
-      result = TIER_RANGES[mid].name;
+      match = TIER_RANGES[mid];
       // Seek smaller threshold
       high = mid - 1;
     } else {
@@ -42,7 +49,7 @@ export function findSeatTier(rowNum) {
     }
   }
 
-  return result;
+  return match;
 }
 
 /**

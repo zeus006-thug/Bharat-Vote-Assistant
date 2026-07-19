@@ -40,23 +40,23 @@ try {
   console.log("✅ Invalid Ticket ID formats blocked by regex.");
 
   // ================= 2. Binary Search Seating Tiers (a11y & Optimization) =================
-  // Row boundary thresholds: Tier 1 (1-10), Tier 2 (11-30), Tier 3 (31-90), Tier 4 (91-150)
-  assert.strictEqual(findSeatTier(1), "Tier 1 (VIP Courtside)", "Row 1 (lower bound) failed.");
-  assert.strictEqual(findSeatTier(10), "Tier 1 (VIP Courtside)", "Row 10 (upper bound) failed.");
-  assert.strictEqual(findSeatTier(11), "Tier 2 (Club Seating)", "Row 11 (lower bound) failed.");
-  assert.strictEqual(findSeatTier(30), "Tier 2 (Club Seating)", "Row 30 (upper bound) failed.");
-  assert.strictEqual(findSeatTier(31), "Tier 3 (Main Bowl)", "Row 31 (lower bound) failed.");
-  assert.strictEqual(findSeatTier(90), "Tier 3 (Main Bowl)", "Row 90 (upper bound) failed.");
-  assert.strictEqual(findSeatTier(91), "Tier 4 (Upper Deck)", "Row 91 (lower bound) failed.");
-  assert.strictEqual(findSeatTier(150), "Tier 4 (Upper Deck)", "Row 150 (upper bound) failed.");
+  // Row boundary thresholds: Tier 1 (1-15), Tier 2 (16-45), Tier 3 (46-100), Tier 4 (101-150)
+  assert.strictEqual(findSeatTier(1).name, "Tier 1: VIP Executive Suite", "Row 1 (lower bound) failed.");
+  assert.strictEqual(findSeatTier(15).name, "Tier 1: VIP Executive Suite", "Row 15 (upper bound) failed.");
+  assert.strictEqual(findSeatTier(16).name, "Tier 2: Category 1 Premium", "Row 16 (lower bound) failed.");
+  assert.strictEqual(findSeatTier(45).name, "Tier 2: Category 1 Premium", "Row 45 (upper bound) failed.");
+  assert.strictEqual(findSeatTier(46).name, "Tier 3: Category 2 Standard", "Row 46 (lower bound) failed.");
+  assert.strictEqual(findSeatTier(100).name, "Tier 3: Category 2 Standard", "Row 100 (upper bound) failed.");
+  assert.strictEqual(findSeatTier(101).name, "Tier 4: Category 3 Upper Deck", "Row 101 (lower bound) failed.");
+  assert.strictEqual(findSeatTier(150).name, "Tier 4: Category 3 Upper Deck", "Row 150 (upper bound) failed.");
   
   // Boundary Edge Cases (Out of Bounds & Typings)
-  assert.strictEqual(findSeatTier(0), "Unknown Tier", "Row 0 out of bounds check failed.");
-  assert.strictEqual(findSeatTier(151), "Unknown Tier", "Row 151 out of bounds check failed.");
-  assert.strictEqual(findSeatTier(-15), "Unknown Tier", "Negative row number failed.");
-  assert.strictEqual(findSeatTier("twenty"), "Unknown Tier", "String value row failed.");
-  assert.strictEqual(findSeatTier(null), "Unknown Tier", "Null row failed.");
-  assert.strictEqual(findSeatTier(undefined), "Unknown Tier", "Undefined row failed.");
+  assert.strictEqual(findSeatTier(0).name, "General Admission", "Row 0 out of bounds check failed.");
+  assert.strictEqual(findSeatTier(151).name, "General Admission", "Row 151 out of bounds check failed.");
+  assert.strictEqual(findSeatTier(-15).name, "General Admission", "Negative row number failed.");
+  assert.strictEqual(findSeatTier("twenty").name, "General Admission", "String value row failed.");
+  assert.strictEqual(findSeatTier(null).name, "General Admission", "Null row failed.");
+  assert.strictEqual(findSeatTier(undefined).name, "General Admission", "Undefined row failed.");
   console.log("✅ Binary Search seat-tier boundaries and edge cases passed successfully.");
 
   // ================= 3. Binary Search Incident ID Lookups =================

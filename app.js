@@ -23,7 +23,9 @@ const STADIUM_ACTIONS = {
 
 // --- APP STATE ---
 let state = {
+  isLoggedIn: false,
   role: 'fan', // fan, staff, organizer
+  username: '',
   xp: 0,
   ticketInfo: {
     ticketId: '',
@@ -34,7 +36,7 @@ let state = {
     seat: '',
     signature: '',
     verified: false,
-    tier: ''
+    tier: null
   },
   transitMethod: 'transit',
   transitDistance: 12,
@@ -67,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
   try { loadStateFromStorage(); } catch (e) { console.error("loadStateFromStorage error:", e); }
   try { initRouting(); } catch (e) { console.error("initRouting error:", e); }
   try { initSettingsModal(); } catch (e) { console.error("initSettingsModal error:", e); }
-  try { initRoleSwitcher(); } catch (e) { console.error("initRoleSwitcher error:", e); }
+  try { initLoginPortal(); } catch (e) { console.error("initLoginPortal error:", e); }
   try { initTicketVerifier(); } catch (e) { console.error("initTicketVerifier error:", e); }
   try { initTransitPlanner(); } catch (e) { console.error("initTransitPlanner error:", e); }
   try { initIncidentReporter(); } catch (e) { console.error("initIncidentReporter error:", e); }
@@ -115,6 +117,80 @@ function loadStateFromStorage() {
   }
 }
 
+// --- SECURE PORTAL LOGIN SYSTEM ---
+function initLoginPortal() {
+  const portal = document.getElementById('login-portal');
+  const form = document.getElementById('login-form');
+  const btnSubmit = document.getElementById('btn-login-submit');
+  const btnLogout = document.getElementById('btn-portal-logout');
+
+  const emailInput = document.getElementById('login-email');
+  const passcodeInput = document.getElementById('login-passcode');
+
+  const btnDemoFan = document.getElementById('btn-demo-fan');
+  const btnDemoVolunteer = document.getElementById('btn-demo-volunteer');
+  const btnDemoOrganizer = document.getElementById('btn-demo-organizer');
+
+  if (!portal || !btnSubmit || !btnLogout) return;
+
+  const triggerLogin = (email, passcode) => {
+    const mail = email.trim().toLowerCase();
+    let assignedRole = 'fan';
+
+    if (mail.includes('organizer') || mail.includes('ops') || mail.includes('manager')) {
+      assignedRole = 'organizer';
+    } else if (mail.includes('volunteer') || mail.includes('staff') || mail.includes('marshal')) {
+      assignedRole = 'staff';
+    }
+
+    state.isLoggedIn = true;
+    state.role = assignedRole;
+    state.username = mail.split('@')[0] || 'User';
+    saveStateToStorage();
+    
+    // Switch to main dashboard
+    switchView('dashboard');
+    updateChatbotWelcome();
+    renderApp();
+  };
+
+  btnSubmit.addEventListener('click', () => {
+    const email = emailInput.value;
+    const passcode = passcodeInput.value;
+    if (!email || !passcode) {
+      alert("Please fill in security credentials.");
+      return;
+    }
+    triggerLogin(email, passcode);
+  });
+
+  // Demo access links
+  btnDemoFan.addEventListener('click', () => {
+    emailInput.value = 'fan@fifa.com';
+    passcodeInput.value = 'WC2026_FAN';
+    triggerLogin('fan@fifa.com', 'WC2026_FAN');
+  });
+
+  btnDemoVolunteer.addEventListener('click', () => {
+    emailInput.value = 'volunteer@fifa.com';
+    passcodeInput.value = 'WC2026_VOL';
+    triggerLogin('volunteer@fifa.com', 'WC2026_VOL');
+  });
+
+  btnDemoOrganizer.addEventListener('click', () => {
+    emailInput.value = 'organizer@fifa.com';
+    passcodeInput.value = 'WC2026_OPS';
+    triggerLogin('organizer@fifa.com', 'WC2026_OPS');
+  });
+
+  btnLogout.addEventListener('click', () => {
+    state.isLoggedIn = false;
+    state.ticketInfo.verified = false; // Reset verification on logout
+    saveStateToStorage();
+    renderApp();
+  });
+}
+
 // --- ROUTING ---
 function initRouting() {
   const navLinks = document.querySelectorAll('.nav-link');
@@ -151,7 +227,6 @@ function switchView(viewId) {
   } else if (viewId === 'planner') {
     initActionPlanner();
   } else if (viewId === 'map') {
-    // If maps loaded, trigger simple resize/relayout checks
     if (window.google && window.google.maps && state.gmapsApiKey) {
       loadGoogleMapsScript(state.gmapsApiKey);
     }
@@ -172,7 +247,6 @@ function initSettingsModal() {
   const tempInput = document.getElementById('settings-temp');
 
   btnOpen.addEventListener('click', () => {
-    // Populate fields
     apiKeyInput.value = state.geminiApiKey || '';
     gmapsKeyInput.value = state.gmapsApiKey || '';
     modelSelect.value = state.geminiModel || 'gemini-2.5-flash';
@@ -197,7 +271,6 @@ function initSettingsModal() {
     if (state.gmapsApiKey) {
       loadGoogleMapsScript(state.gmapsApiKey);
     } else {
-      // Hide google map if key was deleted
       const canvas = document.getElementById('google-map-canvas');
       const fallback = document.getElementById('svg-map-fallback');
       if (canvas && fallback) {
@@ -225,7 +298,6 @@ function initSettingsModal() {
     alert("API Keys cleared.");
   });
 
-  // Close modal when clicking outside of it
   window.addEventListener('click', (e) => {
     if (e.target === modal) {
       modal.classList.remove('active');
@@ -242,7 +314,6 @@ function loadGoogleMapsScript(apiKey) {
     return;
   }
 
-  // Define global maps callback
   window.initGoogleMap = initGoogleMap;
 
   const script = document.createElement('script');
@@ -261,13 +332,12 @@ function initGoogleMap() {
   canvas.style.display = 'block';
   fallback.style.display = 'none';
 
-  // MetLife Stadium Center Coordinates
   const metlifeCenter = { lat: 40.8135, lng: -74.0744 };
 
   const map = new google.maps.Map(canvas, {
     center: metlifeCenter,
     zoom: 15,
-    mapId: 'DEMO_MAP_ID', // Enables modern vector map capabilities
+    mapId: 'DEMO_MAP_ID',
     styles: [
       { elementType: "geometry", stylers: [{ color: "#1f1d2b" }] },
       { elementType: "labels.text.stroke", stylers: [{ color: "#1f1d2b" }] },
@@ -277,7 +347,6 @@ function initGoogleMap() {
     ]
   });
 
-  // Stadium Marker
   const mainMarker = new google.maps.Marker({
     position: metlifeCenter,
     map: map,
@@ -295,7 +364,6 @@ function initGoogleMap() {
     mainInfoWindow.open(map, mainMarker);
   });
 
-  // Gate Checkpoint markers mapping state queue times
   const gates = [
     { name: 'Gate A (North)', lat: 40.8160, lng: -74.0744, wait: state.gateQueues.gateA.waitMinutes },
     { name: 'Gate B (East)', lat: 40.8135, lng: -74.0710, wait: state.gateQueues.gateB.waitMinutes },
@@ -347,29 +415,12 @@ function initAiAlertSynthesizer() {
         <strong style="color:var(--accent); font-size:0.9rem; display:block; margin-bottom:0.5rem; font-family:var(--font-display);">⚡ Aegis AI Operations Synthesis</strong>
         <p style="margin:0;">${synthesis.replace(/\n/g, '<br>')}</p>
       `;
-      state.xp += 15; // AI usage reward
+      state.xp += 15;
       renderApp();
     } catch (err) {
       console.error(err);
       card.innerHTML = `<span style="color:var(--danger);">Failed to complete GenAI analysis. Ensure your Gemini API Key is configured in settings.</span>`;
     }
-  });
-}
-
-// --- ROLE SWITCHER ---
-function initRoleSwitcher() {
-  const select = document.getElementById('role-theme-select');
-  if (!select) return;
-
-  select.value = state.role;
-  select.addEventListener('change', (e) => {
-    state.role = e.target.value;
-    saveStateToStorage();
-    
-    // Reset view to dashboard when role switches to prevent state overlap
-    switchView('dashboard');
-    updateChatbotWelcome();
-    renderApp();
   });
 }
 
@@ -388,7 +439,6 @@ function initTicketVerifier() {
   const btnVerify = document.getElementById('btn-verify-ticket');
   const outputCard = document.getElementById('verifier-output-card');
 
-  // Generator Helper
   btnGenerate.addEventListener('click', () => {
     const randomSuffix = Math.floor(10000 + Math.random() * 90000);
     const mockTicket = {
@@ -410,7 +460,6 @@ function initTicketVerifier() {
       Sig: <span style="color:var(--accent); font-weight:700; cursor:pointer;" title="Click to copy" class="copy-sig-trigger">${signature}</span>
     `;
 
-    // Click to auto-fill
     ticketDisplay.querySelector('.copy-sig-trigger').addEventListener('click', () => {
       inputId.value = mockTicket.ticketId;
       inputMatch.value = mockTicket.matchNumber;
@@ -422,7 +471,6 @@ function initTicketVerifier() {
     });
   });
 
-  // Verify Action
   btnVerify.addEventListener('click', () => {
     const ticket = {
       ticketId: inputId.value.trim(),
@@ -439,33 +487,32 @@ function initTicketVerifier() {
 
     const result = verifyTicket(ticket);
     if (result.isValid) {
-      // Parse row number from Seat string (e.g. "Row 15, Seat 24" -> "15")
       let rowNum = 0;
       const rowMatch = ticket.seat.match(/Row\s+(\d+)/i);
       if (rowMatch) {
         rowNum = parseInt(rowMatch[1]) || 0;
       }
       
-      // OPTIMIZATION: Binary search seating tier lookup
       const tierClassification = findSeatTier(rowNum);
 
-      // Save ticket in state
       state.ticketInfo = { ...ticket, verified: true, tier: tierClassification };
-      state.xp += 50; // Verification XP award
+      state.xp += 50;
       saveStateToStorage();
 
+      const tierBadgeClass = `tier-privilege-badge tier-badge-${tierClassification.category.toLowerCase()}`;
       outputCard.style.borderColor = 'var(--success)';
       outputCard.innerHTML = `
         <h4 style="color:var(--success); font-size:1.15rem; display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
           <span>✅</span> Authenticity Verified
         </h4>
-        <p style="font-size:0.85rem; color:var(--text-secondary);">
-          Welcome, ${ticket.holderName}! Ticket successfully authenticated.<br>
-          <strong>Your Seat:</strong> ${ticket.seat} (${ticket.sector})<br>
-          <strong>Seat Category:</strong> ${tierClassification}<br>
-          <strong>Allocated Gate:</strong> ${ticket.gate}<br>
-          <em>* Custom stadium navigation has been unlocked in your dashboard. (+50 XP Earned)*</em>
-        </p>
+        <div style="font-size:0.85rem; color:var(--text-secondary); line-height:1.5;">
+          Welcome, <strong>${ticket.holderName}</strong>! Ticket successfully authenticated.<br>
+          <strong>Seat Location:</strong> ${ticket.seat} (${ticket.sector})<br>
+          <strong>Access Tier:</strong> <span class="${tierBadgeClass}">${tierClassification.name}</span><br>
+          <strong>Privileges:</strong> ${tierClassification.privileges}<br>
+          <strong>Recommended Entrance:</strong> <strong>${tierClassification.recommendedGate}</strong> (Alternate: ${ticket.gate})<br>
+          <em style="color:var(--accent); font-size:0.8rem; display:block; margin-top:0.5rem;">* Custom stadium navigation has been unlocked in your dashboard. (+50 XP Earned) *</em>
+        </div>
       `;
       renderApp();
     } else {
@@ -508,7 +555,6 @@ function updateTransitEstimations() {
 
   if (!timeEl || !savingsEl) return;
 
-  // Derive traffic multiplier based on largest queue wait time
   const maxWait = Math.max(state.gateQueues.gateA.waitMinutes, state.gateQueues.gateB.waitMinutes, state.gateQueues.gateC.waitMinutes, state.gateQueues.gateD.waitMinutes);
   let crowdState = 'moderate';
   if (maxWait > 25) crowdState = 'critical';
@@ -536,7 +582,6 @@ function initIncidentReporter() {
 
     if (!notes) return;
 
-    // Escaping to prevent XSS
     const escapedNotes = notes
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
@@ -552,7 +597,7 @@ function initIncidentReporter() {
     };
 
     state.activeIncidents.push(newIncident);
-    state.xp += 15; // Incident reporting XP
+    state.xp += 15;
     saveStateToStorage();
 
     notesInput.value = '';
@@ -620,7 +665,6 @@ function submitChatQuery() {
   const query = inputEl.value.trim();
   if (!query) return;
 
-  // Escape query
   const sanitizedQuery = query
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -652,7 +696,6 @@ function addMessageBubble(text, sender) {
   const bubble = document.createElement('div');
   bubble.className = `chat-bubble bubble-${sender}`;
 
-  // Formatting markdown-style tags carefully
   const lines = text.split('\n');
   lines.forEach((line) => {
     const boldRegex = /\*\*(.*?)\*\*/g;
@@ -684,7 +727,6 @@ function addMessageBubble(text, sender) {
     bubble.appendChild(p);
   });
 
-  // Remove final margin
   if (bubble.lastChild) bubble.lastChild.style.margin = "0";
 
   container.appendChild(bubble);
@@ -755,7 +797,6 @@ function initInteractiveMap() {
   const concessionEl = document.getElementById('inspect-concession');
 
   const selectElement = (el, type, name) => {
-    // Clear selection styles
     sectors.forEach(s => s.classList.remove('active-selected'));
     gates.forEach(g => g.setAttribute('r', '14'));
 
@@ -820,6 +861,7 @@ function initActionPlanner() {
     return;
   }
 
+  container.innerHTML = '';
   currentActions.forEach(action => {
     const isCommitted = state.commitments.includes(action.id);
     const isCompleted = state.completedActions.includes(action.id);
@@ -841,7 +883,6 @@ function initActionPlanner() {
       </div>
     `;
 
-    // Actions button
     const btn = card.querySelector(`#btn-act-${action.id}`);
     if (isCompleted) {
       btn.disabled = true;
@@ -855,7 +896,6 @@ function initActionPlanner() {
     container.appendChild(card);
   });
 
-  // Render Sidebar commitments
   const committedDetails = currentActions.filter(a => state.commitments.includes(a.id));
   if (committedDetails.length === 0) {
     sidebar.innerHTML = `<li style="color:var(--text-muted); font-size:0.85rem; list-style:none;">No active goals committed. Browse goals list!</li>`;
@@ -883,7 +923,7 @@ function toggleActionCommitment(id, xpGains) {
     state.commitments = state.commitments.filter(c => c !== id);
   } else {
     state.commitments.push(id);
-    state.xp += 10; // Commitment minor bonus
+    state.xp += 10;
   }
   saveStateToStorage();
   initActionPlanner();
@@ -894,7 +934,7 @@ function completeAction(id, xpGains) {
   state.commitments = state.commitments.filter(c => c !== id);
   if (!state.completedActions.includes(id)) {
     state.completedActions.push(id);
-    state.xp += xpGains; // Complete bonus
+    state.xp += xpGains;
   }
   saveStateToStorage();
   initActionPlanner();
@@ -927,7 +967,7 @@ function renderStaffTasks() {
     li.querySelector(`#chk-task-${index}`).addEventListener('change', (e) => {
       state.staffTasks[index].completed = e.target.checked;
       if (e.target.checked) {
-        state.xp += 20; // 20 XP for volunteer safety sweep
+        state.xp += 20;
       } else {
         state.xp = Math.max(0, state.xp - 20);
       }
@@ -948,7 +988,6 @@ function renderOrganizerIncidents() {
 
   container.innerHTML = '';
 
-  // Sort incidents by incremental timestamp to support binary search lookup
   state.activeIncidents.sort((a, b) => a.id.localeCompare(b.id));
 
   const openIncidents = state.activeIncidents.filter(i => i.status === 'open');
@@ -987,11 +1026,10 @@ function renderOrganizerIncidents() {
       const btnResolve = li.querySelector(`#btn-resolve-${idText}`);
       if (btnResolve) {
         btnResolve.addEventListener('click', () => {
-          // OPTIMIZATION: Use Binary Search to locate incident in the pre-sorted list
           const matchInc = binarySearchIncidents(state.activeIncidents, idText);
           if (matchInc) {
             matchInc.status = 'resolved';
-            state.xp += 30; // Organizer resolution XP
+            state.xp += 30;
             saveStateToStorage();
             renderOrganizerIncidents();
             renderApp();
@@ -1006,6 +1044,24 @@ function renderOrganizerIncidents() {
 
 // --- RENDERING ROUTINES ---
 function renderApp() {
+  const portal = document.getElementById('login-portal');
+  const mainContent = document.getElementById('main-content');
+  const navMenu = document.querySelector('header nav');
+  const btnLogout = document.getElementById('btn-portal-logout');
+
+  if (state.isLoggedIn) {
+    if (portal) portal.classList.remove('active');
+    if (mainContent) mainContent.style.display = 'block';
+    if (navMenu) navMenu.style.display = 'block';
+    if (btnLogout) btnLogout.style.display = 'block';
+  } else {
+    if (portal) portal.classList.add('active');
+    if (mainContent) mainContent.style.display = 'none';
+    if (navMenu) navMenu.style.display = 'none';
+    if (btnLogout) btnLogout.style.display = 'none';
+    return; // Stop rendering dashboards if not logged in
+  }
+
   // Update Points XP badge
   const pointsVal = document.getElementById('user-points-val');
   if (pointsVal) pointsVal.textContent = state.xp;
@@ -1025,7 +1081,6 @@ function renderApp() {
     renderOrganizerIncidents();
   }
 
-  // Update layout transit inputs
   const commuteDist = document.getElementById('commute-distance');
   const commuteMethod = document.getElementById('commute-transit-method');
   if (commuteDist && commuteMethod) {
@@ -1034,18 +1089,25 @@ function renderApp() {
     commuteMethod.value = state.transitMethod;
   }
 
-  // Update Fan match ticket displays
+  // Update Fan match ticket displays with detailed seating privileges
   const ticketSummaryEl = document.getElementById('fan-ticket-summary');
   if (ticketSummaryEl) {
     if (state.ticketInfo && state.ticketInfo.verified) {
+      const tier = state.ticketInfo.tier || {};
+      const tierName = tier.name || 'Standard Seating';
+      const tierPrivs = tier.privileges || 'Standard stadium seating access.';
+      const recGate = tier.recommendedGate || state.ticketInfo.gate;
+      const catClass = (tier.category || 'standard').toLowerCase();
+
       ticketSummaryEl.innerHTML = `
-        <div style="background: hsla(143, 85%, 43%, 0.1); padding:0.8rem; border-radius:var(--radius-sm); border:1px solid var(--success);">
-          <strong style="color:var(--success); font-size:0.95rem; display:block; margin-bottom:0.25rem;">✓ Verified - ${state.ticketInfo.matchNumber}</strong>
-          <span style="font-size:0.8rem; color:var(--text-secondary); display:block; line-height:1.4;">
+        <div style="background: hsla(143, 85%, 43%, 0.05); padding:1rem; border-radius:var(--radius-sm); border:1px solid var(--success);">
+          <strong style="color:var(--success); font-size:0.95rem; display:block; margin-bottom:0.5rem;">✓ Verified Ticket - ${state.ticketInfo.matchNumber}</strong>
+          <span style="font-size:0.8rem; color:var(--text-secondary); display:block; line-height:1.5;">
             <strong>Holder:</strong> ${state.ticketInfo.holderName}<br>
-            <strong>Seat:</strong> ${state.ticketInfo.seat} | ${state.ticketInfo.sector}<br>
-            <strong>Seat Category:</strong> ${state.ticketInfo.tier || 'Standard Seating'}<br>
-            <strong>Gate:</strong> Entry via ${state.ticketInfo.gate}
+            <strong>Seat:</strong> ${state.ticketInfo.seat} (${state.ticketInfo.sector})<br>
+            <strong>Tier Category:</strong> <span class="tier-privilege-badge tier-badge-${catClass}" style="margin-top:0;">${tierName}</span><br>
+            <strong>Privileges:</strong> ${tierPrivs}<br>
+            <strong>Recommended Gate:</strong> ${recGate}
           </span>
         </div>
       `;
@@ -1059,7 +1121,6 @@ function renderApp() {
     }
   }
 
-  // Re-render dashboard components
   renderDashboard();
   renderInsights();
   updateTransitEstimations();
@@ -1073,7 +1134,6 @@ function renderDashboard() {
     gateD: state.gateQueues.gateD.waitMinutes
   };
 
-  // Render queue wait time bar chart on fan/organizer dashboards
   if (state.role === 'fan') {
     renderBenchmarkChart('fan-queue-chart-target', waitGates);
   } else if (state.role === 'organizer') {
