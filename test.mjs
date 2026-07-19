@@ -152,8 +152,20 @@ try {
   console.log("✅ Chatbot fallback and AI synthesis reasoning engines verified.");
 
   // ================= 8. Dashboard Insights alerts =================
-  const emptyInsights = getDashboardInsights({ role: 'fan', ticketInfo: { verified: false } });
-  assert.strictEqual(emptyInsights[0].type, 'critical', "Unverified ticket should trigger critical action warning.");
+  const bottleneckState = {
+    gateQueues: {
+      gateA: { waitMinutes: 10 },
+      gateB: { waitMinutes: 25 },
+      gateC: { waitMinutes: 5 },
+      gateD: { waitMinutes: 12 }
+    },
+    activeIncidents: [
+      { id: "inc-1", status: "open", type: "medical" }
+    ]
+  };
+  const emptyInsights = getDashboardInsights(bottleneckState);
+  assert.strictEqual(emptyInsights[0].type, 'critical', "Bottleneck should trigger critical warning.");
+  assert.strictEqual(emptyInsights[1].type, 'critical', "Active incidents should trigger critical alert.");
   console.log("✅ Dynamic contextual alert notifications validated.");
 
   console.log("\n🎉 ALL SCORE OPTIMIZATION TESTS PASSED SUCCESSFULLY! Code efficiency, math engine boundaries, and AI syntheses validated.");

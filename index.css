@@ -923,37 +923,6 @@ footer {
   }
 }
 
-/* --- SECURE LOGIN OVERLAY & PORTAL --- */
-.login-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: radial-gradient(circle at center, hsla(256, 54%, 5%, 0.95) 0%, hsla(256, 54%, 2%, 0.99) 100%);
-  z-index: 10000;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(20px);
-  padding: 1.5rem;
-  transition: opacity 0.3s ease;
-}
-
-.login-overlay.active {
-  display: flex;
-}
-
-.login-container {
-  width: 100%;
-  max-width: 440px;
-  background: hsla(256, 54%, 8%, 0.7);
-  border: 1px solid var(--border-active);
-  box-shadow: 0 0 40px rgba(138, 43, 226, 0.25), var(--shadow-lg);
-  padding: 2.5rem 2rem;
-  animation: modalScale 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
 /* Tier Privilege Details Card Styling */
 .tier-privilege-badge {
   display: inline-block;

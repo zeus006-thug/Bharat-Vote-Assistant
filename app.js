@@ -1,35 +1,17 @@
-import { verifyTicket, generateTicketSignature, findSeatTier, binarySearchIncidents, estimateTransit, calculateGateQueue, calculateXP } from './operations.js';
+/* global atob, google */
+import { verifyTicket, generateTicketSignature, findSeatTier, binarySearchIncidents } from './operations.js';
 import { renderDonutChart, renderBenchmarkChart } from './chart.js';
 import { getCoachResponse, getDashboardInsights, getIncidentSynthesis } from './assistant.js';
-
-// --- STADIUM ACTIONS LIST ---
-const STADIUM_ACTIONS = {
-  fan: [
-    { id: 'act-fan-transit', title: 'Eco Rail Transit', desc: 'Commute to the stadium via train instead of a private vehicle.', xp: 40, category: 'sustainability' },
-    { id: 'act-fan-sort', title: 'Zero-Waste Sorting', desc: 'Correctly separate compostables, recyclables, and trash at concession bins.', xp: 20, category: 'sustainability' },
-    { id: 'act-fan-cashless', title: 'Cashless Pay', desc: 'Use contactless digital cards or Google Pay to expedite concession queues.', xp: 15, category: 'operations' },
-    { id: 'act-fan-carpool', title: 'Carpool Share', desc: 'Travel in a group of 4 or more to reduce traffic density around lots.', xp: 25, category: 'sustainability' }
-  ],
-  staff: [
-    { id: 'act-staff-sweep', title: 'Complete Safety Sweep', desc: 'Conduct a thorough walk-through patrol of your sector to report hazards.', xp: 30, category: 'safety' },
-    { id: 'act-staff-wheelchair', title: 'Accessibility Navigation', desc: 'Assist a guest requiring wheelchair routing to Sector 112 seats.', xp: 35, category: 'accessibility' },
-    { id: 'act-staff-dispersal', title: 'Crowd Side-Valve Guide', desc: 'Direct crowds at Gate A to open side valves during peak congestion.', xp: 30, category: 'crowd' }
-  ],
-  organizer: [
-    { id: 'act-org-dispatch', title: 'Dispatch Aux Volunteers', desc: 'Redirect 15 standby volunteers from Sector C to Gate A entry lines.', xp: 50, category: 'operations' },
-    { id: 'act-org-bottleneck', title: 'Deploy Gate Congestion Warning', desc: 'Broadcast queue alerts to fan mobile devices suggesting Gate C entry.', xp: 40, category: 'operations' }
-  ]
-};
 
 // Base64 Obfuscated default key to prevent search exposure & push blocks
 const OBFUSCATED_KEY = atob("QVEuQWI4Uk42SlJ3UUQ1REdyUHhDQnZRaTdlUnhiSGpSUEFnVVMyUlRuSUhiNXJyNy1LR1E=");
 
 // --- APP STATE ---
 let state = {
-  isLoggedIn: false,
-  role: 'fan', // fan, staff, organizer
-  username: '',
-  xp: 0,
+  isLoggedIn: true,
+  role: 'organizer', // Strictly Venue Operations Commander
+  username: 'Command-Center',
+  xp: 0, // Central Command Score
   ticketInfo: {
     ticketId: '',
     holderName: '',
@@ -41,8 +23,6 @@ let state = {
     verified: false,
     tier: null
   },
-  transitMethod: 'transit',
-  transitDistance: 12,
   activeIncidents: [
     { id: "inc-1", type: "spill", sector: "north", notes: "Water puddle near Exit Row 14, Sector A", status: "open", time: "16:02" },
     { id: "inc-2", type: "crowd", sector: "east", notes: "Ticket scan dispute piling queues at Gate B", status: "open", time: "16:05" }
@@ -54,18 +34,10 @@ let state = {
     gateD: { waitMinutes: 18, length: 150 }
   },
   sectorDensities: { north: 85, east: 94, south: 60, west: 78 },
-  staffTasks: [
-    { id: 'task-spill', title: 'Sector Spill Sweep', desc: 'Perform visual check for wet floors or slip hazards.', completed: false },
-    { id: 'task-esc', title: 'Escalator Sensor Check', desc: 'Verify safety indicators and exit landing grids are clear.', completed: false },
-    { id: 'task-gate', title: 'Accessibility Lane Patrol', desc: 'Ensure wheelchair ramps are clean and free of baggage.', completed: false }
-  ],
-  commitments: [], // active committed action IDs
-  completedActions: [], // completed action IDs
   geminiApiKey: OBFUSCATED_KEY,
   geminiModel: 'gemini-2.5-flash',
   geminiTemp: 0.7,
-  gmapsApiKey: '',
-  concessionsOrder: [] // active items compiling in checkout
+  gmapsApiKey: ''
 };
 
 // --- INITIALIZATION ---
@@ -73,15 +45,11 @@ document.addEventListener('DOMContentLoaded', () => {
   try { loadStateFromStorage(); } catch (e) { console.error("loadStateFromStorage error:", e); }
   try { initRouting(); } catch (e) { console.error("initRouting error:", e); }
   try { initSettingsModal(); } catch (e) { console.error("initSettingsModal error:", e); }
-  try { initLoginPortal(); } catch (e) { console.error("initLoginPortal error:", e); }
   try { initTicketVerifier(); } catch (e) { console.error("initTicketVerifier error:", e); }
-  try { initTransitPlanner(); } catch (e) { console.error("initTransitPlanner error:", e); }
   try { initIncidentReporter(); } catch (e) { console.error("initIncidentReporter error:", e); }
   try { initChatbot(); } catch (e) { console.error("initChatbot error:", e); }
-  try { initActionPlanner(); } catch (e) { console.error("initActionPlanner error:", e); }
   try { initInteractiveMap(); } catch (e) { console.error("initInteractiveMap error:", e); }
   try { initAiAlertSynthesizer(); } catch (e) { console.error("initAiAlertSynthesizer error:", e); }
-  try { initConcessionsHandlers(); } catch (e) { console.error("initConcessionsHandlers error:", e); }
   
   // Register Service Worker for PWA cache management
   if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
@@ -92,7 +60,6 @@ document.addEventListener('DOMContentLoaded', () => {
           if (newWorker) {
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // Instantly swap cache contents and reload
                 window.location.reload();
               }
             });
@@ -102,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .catch(err => console.warn('Service Worker registration failed:', err));
   }
 
-  // Render application
+  // Render application dashboard
   try { renderApp(); } catch (e) { console.error("renderApp error:", e); }
   
   // Attempt loading Google Maps if API key is stored
@@ -139,85 +106,13 @@ function loadStateFromStorage() {
       console.error("Corrupted state in localStorage. Resetting storage.", e);
     }
   }
-  // Enforce pre-loaded key fallback
+  // Enforce default key recovery
   if (!state.geminiApiKey) {
     state.geminiApiKey = OBFUSCATED_KEY;
   }
-}
-
-// --- SECURE PORTAL LOGIN SYSTEM ---
-function initLoginPortal() {
-  const portal = document.getElementById('login-portal');
-  const form = document.getElementById('login-form');
-  const btnSubmit = document.getElementById('btn-login-submit');
-  const btnLogout = document.getElementById('btn-portal-logout');
-
-  const emailInput = document.getElementById('login-email');
-  const passcodeInput = document.getElementById('login-passcode');
-
-  const btnDemoFan = document.getElementById('btn-demo-fan');
-  const btnDemoVolunteer = document.getElementById('btn-demo-volunteer');
-  const btnDemoOrganizer = document.getElementById('btn-demo-organizer');
-
-  if (!portal || !btnSubmit || !btnLogout) return;
-
-  const triggerLogin = (email, passcode) => {
-    const mail = email.trim().toLowerCase();
-    let assignedRole = 'fan';
-
-    if (mail.includes('organizer') || mail.includes('ops') || mail.includes('manager')) {
-      assignedRole = 'organizer';
-    } else if (mail.includes('volunteer') || mail.includes('staff') || mail.includes('marshal')) {
-      assignedRole = 'staff';
-    }
-
-    state.isLoggedIn = true;
-    state.role = assignedRole;
-    state.username = mail.split('@')[0] || 'User';
-    saveStateToStorage();
-    
-    // Switch to main dashboard
-    switchView('dashboard');
-    updateChatbotWelcome();
-    renderApp();
-  };
-
-  btnSubmit.addEventListener('click', () => {
-    const email = emailInput.value;
-    const passcode = passcodeInput.value;
-    if (!email || !passcode) {
-      alert("Please fill in security credentials.");
-      return;
-    }
-    triggerLogin(email, passcode);
-  });
-
-  // Demo access links
-  btnDemoFan.addEventListener('click', () => {
-    emailInput.value = 'fan@fifa.com';
-    passcodeInput.value = 'WC2026_FAN';
-    triggerLogin('fan@fifa.com', 'WC2026_FAN');
-  });
-
-  btnDemoVolunteer.addEventListener('click', () => {
-    emailInput.value = 'volunteer@fifa.com';
-    passcodeInput.value = 'WC2026_VOL';
-    triggerLogin('volunteer@fifa.com', 'WC2026_VOL');
-  });
-
-  btnDemoOrganizer.addEventListener('click', () => {
-    emailInput.value = 'organizer@fifa.com';
-    passcodeInput.value = 'WC2026_OPS';
-    triggerLogin('organizer@fifa.com', 'WC2026_OPS');
-  });
-
-  btnLogout.addEventListener('click', () => {
-    state.isLoggedIn = false;
-    state.ticketInfo.verified = false;
-    state.concessionsOrder = [];
-    saveStateToStorage();
-    renderApp();
-  });
+  // Force organizer role
+  state.role = 'organizer';
+  state.isLoggedIn = true;
 }
 
 // --- ROUTING ---
@@ -252,8 +147,6 @@ function switchView(viewId) {
   if (viewId === 'dashboard') {
     renderDashboard();
     renderInsights();
-  } else if (viewId === 'planner') {
-    initActionPlanner();
   } else if (viewId === 'map') {
     if (window.google && window.google.maps && state.gmapsApiKey) {
       loadGoogleMapsScript(state.gmapsApiKey);
@@ -343,7 +236,7 @@ function initSettingsModal() {
   });
 }
 
-// --- GOOGLE MAPS API DYNAMIC LOADING ---
+// --- GOOGLE MAPS API LOADING ---
 function loadGoogleMapsScript(apiKey) {
   if (!apiKey) return;
   
@@ -385,21 +278,13 @@ function initGoogleMap() {
     ]
   });
 
-  const mainMarker = new google.maps.Marker({
+  new google.maps.Marker({
     position: metlifeCenter,
     map: map,
-    title: "MetLife Stadium - FIFA World Cup 2026 Center",
+    title: "MetLife Stadium - FIFA World Cup 2026 Operations",
     icon: {
       url: "https://maps.google.com/mapfiles/ms/icons/red-pushpin.png"
     }
-  });
-
-  const mainInfoWindow = new google.maps.InfoWindow({
-    content: `<div style="color:#000; font-family:sans-serif; font-size:12px;"><strong>MetLife Arena 2026</strong><br>Capacity: 82,500. Matches: Match 10, Match 14.</div>`
-  });
-
-  mainMarker.addListener("click", () => {
-    mainInfoWindow.open(map, mainMarker);
   });
 
   const gates = [
@@ -450,7 +335,7 @@ function initAiAlertSynthesizer() {
     try {
       const synthesis = await getIncidentSynthesis(state.activeIncidents, state.geminiApiKey);
       card.innerHTML = `
-        <strong style="color:var(--accent); font-size:0.9rem; display:block; margin-bottom:0.5rem; font-family:var(--font-display);">⚡ Aegis AI Operations Synthesis</strong>
+        <strong style="color:var(--accent); font-size:0.9rem; display:block; margin-bottom:0.5rem; font-family:var(--font-display);">⚡ Aegis AI Central Operations Synthesis</strong>
         <p style="margin:0;">${synthesis.replace(/\n/g, '<br>')}</p>
       `;
       state.xp += 15;
@@ -462,7 +347,7 @@ function initAiAlertSynthesizer() {
   });
 }
 
-// --- TICKET VERIFIER ---
+// --- TICKET VERIFIER (Checkpoint Inspector) ---
 function initTicketVerifier() {
   const btnGenerate = document.getElementById('btn-generate-test-ticket');
   const ticketDisplay = document.getElementById('test-ticket-display');
@@ -491,11 +376,11 @@ function initTicketVerifier() {
     const signature = generateTicketSignature(mockTicket);
     ticketDisplay.style.display = 'block';
     ticketDisplay.innerHTML = `
-      <strong>Valid Code Sample:</strong><br>
+      <strong>Valid Checkpoint Ticket Sample:</strong><br>
       ID: ${mockTicket.ticketId}<br>
       Holder: ${mockTicket.holderName}<br>
       Seat: ${mockTicket.seat}<br>
-      Sig: <span style="color:var(--accent); font-weight:700; cursor:pointer;" title="Click to copy" class="copy-sig-trigger">${signature}</span>
+      Sig: <span style="color:var(--accent); font-weight:700; cursor:pointer;" class="copy-sig-trigger">${signature}</span>
     `;
 
     ticketDisplay.querySelector('.copy-sig-trigger').addEventListener('click', () => {
@@ -533,23 +418,20 @@ function initTicketVerifier() {
       
       const tierClassification = findSeatTier(rowNum);
 
-      state.ticketInfo = { ...ticket, verified: true, tier: tierClassification };
-      state.xp += 50;
+      state.xp += 20;
       saveStateToStorage();
 
       const tierBadgeClass = `tier-privilege-badge tier-badge-${tierClassification.category.toLowerCase()}`;
       outputCard.style.borderColor = 'var(--success)';
       outputCard.innerHTML = `
         <h4 style="color:var(--success); font-size:1.15rem; display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem;">
-          <span>✅</span> Authenticity Verified
+          <span>✅</span> Signature Check Valid
         </h4>
         <div style="font-size:0.85rem; color:var(--text-secondary); line-height:1.5;">
-          Welcome, <strong>${ticket.holderName}</strong>! Ticket successfully authenticated.<br>
-          <strong>Seat Location:</strong> ${ticket.seat} (${ticket.sector})<br>
-          <strong>Access Tier:</strong> <span class="${tierBadgeClass}">${tierClassification.name}</span><br>
+          <strong>Attendee:</strong> ${ticket.holderName}<br>
+          <strong>Tier Category:</strong> <span class="${tierBadgeClass}">${tierClassification.name}</span><br>
           <strong>Privileges:</strong> ${tierClassification.privileges}<br>
-          <strong>Recommended Entrance:</strong> <strong>${tierClassification.recommendedGate}</strong> (Alternate: ${ticket.gate})<br>
-          <em style="color:var(--accent); font-size:0.8rem; display:block; margin-top:0.5rem;">* Custom stadium navigation has been unlocked in your dashboard. (+50 XP Earned) *</em>
+          <strong>Recommended Checkpoint:</strong> <strong>${tierClassification.recommendedGate}</strong> (Alternate: ${ticket.gate})<br>
         </div>
       `;
       renderApp();
@@ -565,45 +447,6 @@ function initTicketVerifier() {
       `;
     }
   });
-}
-
-// --- TRANSIT PLANNER ---
-function initTransitPlanner() {
-  const methodSelect = document.getElementById('commute-transit-method');
-  const distanceInput = document.getElementById('commute-distance');
-  const distanceVal = document.getElementById('commute-distance-val');
-
-  if (!methodSelect || !distanceInput) return;
-
-  distanceInput.addEventListener('input', () => {
-    distanceVal.textContent = distanceInput.value;
-    state.transitDistance = parseInt(distanceInput.value) || 1;
-    updateTransitEstimations();
-  });
-
-  methodSelect.addEventListener('change', () => {
-    state.transitMethod = methodSelect.value;
-    updateTransitEstimations();
-  });
-}
-
-function updateTransitEstimations() {
-  const timeEl = document.getElementById('transit-calc-time');
-  const savingsEl = document.getElementById('transit-calc-savings');
-
-  if (!timeEl || !savingsEl) return;
-
-  const maxWait = Math.max(state.gateQueues.gateA.waitMinutes, state.gateQueues.gateB.waitMinutes, state.gateQueues.gateC.waitMinutes, state.gateQueues.gateD.waitMinutes);
-  let crowdState = 'moderate';
-  if (maxWait > 25) crowdState = 'critical';
-  else if (maxWait > 15) crowdState = 'heavy';
-  else if (maxWait < 8) crowdState = 'low';
-
-  const estimates = estimateTransit(state.transitMethod, state.transitDistance, crowdState);
-  timeEl.textContent = `${estimates.travelTimeMinutes} mins`;
-  savingsEl.textContent = `${estimates.carbonSavedKg} kg`;
-
-  saveStateToStorage();
 }
 
 // --- INCIDENT REPORTER ---
@@ -639,7 +482,7 @@ function initIncidentReporter() {
     saveStateToStorage();
 
     notesInput.value = '';
-    alert("Incident successfully reported to Stadium central command. (+15 XP logged)");
+    alert("Radio alert logged to operations queue. (+15 Command Score)");
 
     renderApp();
   });
@@ -667,11 +510,7 @@ function updateChatbotWelcome() {
 
   chatMessages.innerHTML = '';
   
-  let welcomeText = "";
-  if (state.role === 'fan') welcomeText = "Welcome to MetLife Stadium! I am Aegis, your FIFA World Cup 2026 Assistant. How can I help you with navigation, transit, accessibility, concessions, or translations today?";
-  else if (state.role === 'staff') welcomeText = "Aegis Volunteer Copilot Active. Input stadium incidents, crowd reports, or ask for emergency procedures.";
-  else welcomeText = "Aegis Operational intelligence Console initialized. Ask for security summaries, bottleneck predictions, or exit protocols.";
-
+  const welcomeText = "Aegis Central Operations Copilot Active. Ask for security logs summaries, bottleneck predictions, dispatch instructions, or emergency evacuation drafts.";
   addMessageBubble(welcomeText, 'assistant');
   updateSuggestionChips();
 }
@@ -694,7 +533,7 @@ function updateChatbotModeStatus() {
   }
 
   if (desc) {
-    desc.textContent = `You are interacting as a ${state.role.toUpperCase()}. Aegis aligns responses to your selected view context.`;
+    desc.textContent = "Security clearance level: COMMAND. Access restricted to MetLife Stadium operations directive.";
   }
 }
 
@@ -800,14 +639,7 @@ function updateSuggestionChips() {
 
   chipContainer.innerHTML = '';
 
-  let chips = [];
-  if (state.role === 'fan') {
-    chips = ["Find Gate A", "Accessibility Guide", "Show Concessions", "Transit & Parking"];
-  } else if (state.role === 'staff') {
-    chips = ["Spill cleanup steps", "Lost child safety", "Disputed ticket steps"];
-  } else {
-    chips = ["Operations status", "Bottleneck prediction", "Incident summary"];
-  }
+  const chips = ["Operations status", "Bottleneck prediction", "Incident summary", "Evacuation draft"];
 
   chips.forEach(chipText => {
     const chip = document.createElement('button');
@@ -853,7 +685,7 @@ function initInteractiveMap() {
       statusEl.textContent = `${density}% Full`;
       statusEl.className = `badge badge-${statusColor}`;
       waitEl.textContent = "Seat flow: stable";
-      accessEl.textContent = key === 'north' || key === 'south' ? "Accessible ramp available" : "Elevator access only";
+      accessEl.textContent = key === 'north' || key === 'south' ? "Accessible ramp active" : "Elevator access active";
       concessionEl.textContent = key === 'north' ? "Green Meadow Concessions (Vegan)" : key === 'south' ? "Halal Grill" : "Snacks & Drinks";
     } else {
       el.setAttribute('r', '18');
@@ -882,238 +714,7 @@ function initInteractiveMap() {
   });
 }
 
-// --- ACTION PLANNER ---
-function initActionPlanner() {
-  const container = document.getElementById('planner-action-list');
-  const sidebar = document.getElementById('commitments-list-sidebar');
-
-  if (!container || !sidebar) return;
-
-  container.innerHTML = '';
-  sidebar.innerHTML = '';
-
-  const currentActions = STADIUM_ACTIONS[state.role] || [];
-  
-  if (currentActions.length === 0) {
-    container.innerHTML = `<p style="color:var(--text-muted);">No action goals available for this role.</p>`;
-    return;
-  }
-
-  container.innerHTML = '';
-  currentActions.forEach(action => {
-    const isCommitted = state.commitments.includes(action.id);
-    const isCompleted = state.completedActions.includes(action.id);
-
-    const card = document.createElement('div');
-    card.className = `action-card ${isCommitted ? 'committed-active' : ''}`;
-
-    card.innerHTML = `
-      <div class="action-header">
-        <h4 class="action-title">${action.title}</h4>
-        <span class="action-impact">+${action.xp} XP</span>
-      </div>
-      <p class="action-desc">${action.desc}</p>
-      <div class="action-footer">
-        <span class="action-category">${action.category}</span>
-        <button class="action-btn ${isCommitted ? 'committed' : ''}" type="button" id="btn-act-${action.id}">
-          ${isCompleted ? 'Completed 🎉' : isCommitted ? 'Committed' : 'Commit'}
-        </button>
-      </div>
-    `;
-
-    const btn = card.querySelector(`#btn-act-${action.id}`);
-    if (isCompleted) {
-      btn.disabled = true;
-      btn.style.opacity = '0.6';
-    } else {
-      btn.addEventListener('click', () => {
-        toggleActionCommitment(action.id, action.xp);
-      });
-    }
-
-    container.appendChild(card);
-  });
-
-  const committedDetails = currentActions.filter(a => state.commitments.includes(a.id));
-  if (committedDetails.length === 0) {
-    sidebar.innerHTML = `<li style="color:var(--text-muted); font-size:0.85rem; list-style:none;">No active goals committed. Browse goals list!</li>`;
-  } else {
-    committedDetails.forEach(action => {
-      const li = document.createElement('li');
-      li.className = 'commitment-item';
-      li.innerHTML = `
-        <div class="commitment-info">
-          <span class="commitment-title">${action.title}</span>
-          <span class="commitment-savings">+${action.xp} XP</span>
-        </div>
-        <button class="commitment-complete-btn" title="Complete Action" type="button" id="btn-done-${action.id}">✓</button>
-      `;
-      li.querySelector(`#btn-done-${action.id}`).addEventListener('click', () => {
-        completeAction(action.id, action.xp);
-      });
-      sidebar.appendChild(li);
-    });
-  }
-}
-
-function toggleActionCommitment(id, xpGains) {
-  if (state.commitments.includes(id)) {
-    state.commitments = state.commitments.filter(c => c !== id);
-  } else {
-    state.commitments.push(id);
-    state.xp += 10;
-  }
-  saveStateToStorage();
-  initActionPlanner();
-  renderApp();
-}
-
-function completeAction(id, xpGains) {
-  state.commitments = state.commitments.filter(c => c !== id);
-  if (!state.completedActions.includes(id)) {
-    state.completedActions.push(id);
-    state.xp += xpGains;
-  }
-  saveStateToStorage();
-  initActionPlanner();
-  renderApp();
-}
-
-// --- CONCESSIONS & CASHLESS ECO-EATS HANDLERS ---
-function initConcessionsHandlers() {
-  const items = document.querySelectorAll('.btn-order-item');
-  const btnCheckout = document.getElementById('btn-concessions-checkout');
-  
-  if (items.length === 0 || !btnCheckout) return;
-
-  items.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const itemName = btn.getAttribute('data-item');
-      const itemPrice = parseFloat(btn.getAttribute('data-price')) || 0;
-      const itemXP = parseInt(btn.getAttribute('data-xp')) || 0;
-
-      // Add item to active order list
-      state.concessionsOrder.push({ name: itemName, price: itemPrice, xp: itemXP });
-      
-      // Update order rendering
-      renderConcessionsOrder();
-    });
-  });
-
-  btnCheckout.addEventListener('click', () => {
-    const statusBox = document.getElementById('concessions-order-status');
-    const receiptBox = document.getElementById('concessions-receipt-card');
-    
-    if (!statusBox || !receiptBox) return;
-
-    btnCheckout.style.display = 'none';
-    statusBox.innerHTML = `
-      <span style="display:flex; align-items:center; gap:0.5rem; color:var(--accent);">
-        <span class="typing-dot" style="background:var(--accent);"></span>
-        Contactless Payment processing via secure stadium perimeter gateway...
-      </span>
-    `;
-
-    setTimeout(() => {
-      const totalPrice = state.concessionsOrder.reduce((sum, item) => sum + item.price, 0);
-      const totalXP = state.concessionsOrder.reduce((sum, item) => sum + item.xp, 0);
-      
-      // Generate clean transaction receipt signature
-      const randomId = Math.floor(100000 + Math.random() * 900000);
-      const txSig = generateTicketSignature({
-        ticketId: `PAY-${randomId}`,
-        holderName: state.username,
-        seat: `Concession-$${totalPrice.toFixed(2)}`
-      });
-
-      // Award order XP
-      state.xp += totalXP;
-      
-      // Receipt HTML
-      receiptBox.style.display = 'block';
-      receiptBox.innerHTML = `
-        <strong style="color:var(--success); font-size:0.95rem; display:block; margin-bottom:0.5rem;">🎉 Cashless Payment Authenticated</strong>
-        <div style="font-size:0.8rem; color:var(--text-secondary); line-height:1.5;">
-          <strong>Order Items:</strong> ${state.concessionsOrder.map(i => i.name).join(', ')}<br>
-          <strong>Total Charged:</strong> $${totalPrice.toFixed(2)} (Cashless Pay)<br>
-          <strong>Transaction Signature:</strong> <span style="font-family:monospace; color:var(--accent);">${txSig}</span><br>
-          <strong>Vol Rewards:</strong> +${totalXP} XP logged to your profile!<br>
-          <em style="display:block; margin-top:0.4rem; color:var(--text-muted);">Please collect your items at Sector A Concession Lane 3 by scanning your screen receipt.</em>
-        </div>
-      `;
-
-      // Clear current order
-      state.concessionsOrder = [];
-      saveStateToStorage();
-      renderConcessionsOrder();
-      renderApp();
-    }, 1500);
-  });
-}
-
-function renderConcessionsOrder() {
-  const statusBox = document.getElementById('concessions-order-status');
-  const btnCheckout = document.getElementById('btn-concessions-checkout');
-  
-  if (!statusBox || !btnCheckout) return;
-
-  if (state.concessionsOrder.length === 0) {
-    statusBox.innerHTML = `<em>No active order items selected. Click "Add to Order" to compile order.</em>`;
-    btnCheckout.style.display = 'none';
-    return;
-  }
-
-  const totalPrice = state.concessionsOrder.reduce((sum, item) => sum + item.price, 0);
-  const totalXP = state.concessionsOrder.reduce((sum, item) => sum + item.xp, 0);
-
-  statusBox.innerHTML = `
-    <strong>Compiled Cart:</strong> ${state.concessionsOrder.length} items | 
-    <strong>Total:</strong> <span style="color:var(--accent); font-weight:700;">$${totalPrice.toFixed(2)}</span> | 
-    <span style="color:var(--success); font-weight:600;">+${totalXP} XP</span>
-  `;
-  btnCheckout.style.display = 'block';
-}
-
-// --- STAFF TASKS (VOLUNTEER VIEW ONLY) ---
-function renderStaffTasks() {
-  const container = document.getElementById('staff-tasks-list');
-  const countSpan = document.getElementById('staff-tasks-count');
-
-  if (!container) return;
-
-  container.innerHTML = '';
-  
-  const openCount = state.staffTasks.filter(t => !t.completed).length;
-  if (countSpan) countSpan.textContent = openCount;
-
-  state.staffTasks.forEach((task, index) => {
-    const li = document.createElement('li');
-    li.className = `staff-task-item ${task.completed ? 'task-done' : ''}`;
-    li.innerHTML = `
-      <input type="checkbox" class="staff-checkbox" id="chk-task-${index}" ${task.completed ? 'checked' : ''}>
-      <div style="flex-grow:1; display:flex; flex-direction:column;">
-        <span style="font-weight:600; font-size:0.9rem;">${task.title}</span>
-        <span style="font-size:0.75rem; color:var(--text-secondary);">${task.desc}</span>
-      </div>
-    `;
-
-    li.querySelector(`#chk-task-${index}`).addEventListener('change', (e) => {
-      state.staffTasks[index].completed = e.target.checked;
-      if (e.target.checked) {
-        state.xp += 20;
-      } else {
-        state.xp = Math.max(0, state.xp - 20);
-      }
-      saveStateToStorage();
-      renderStaffTasks();
-      renderApp();
-    });
-
-    container.appendChild(li);
-  });
-}
-
-// --- INCIDENTS VIEW (ORGANIZER LOGS) ---
+// --- INCIDENTS VIEW (COMMAND CENTRAL LOGS) ---
 function renderOrganizerIncidents() {
   const container = document.getElementById('organizer-incidents-list');
   const badge = document.getElementById('unresolved-incident-badge');
@@ -1177,87 +778,16 @@ function renderOrganizerIncidents() {
 
 // --- RENDERING ROUTINES ---
 function renderApp() {
-  const portal = document.getElementById('login-portal');
   const mainContent = document.getElementById('main-content');
-  const navMenu = document.querySelector('header nav');
-  const btnLogout = document.getElementById('btn-portal-logout');
-
-  if (state.isLoggedIn) {
-    if (portal) portal.classList.remove('active');
-    if (mainContent) mainContent.style.display = 'block';
-    if (navMenu) navMenu.style.display = 'block';
-    if (btnLogout) btnLogout.style.display = 'block';
-  } else {
-    if (portal) portal.classList.add('active');
-    if (mainContent) mainContent.style.display = 'none';
-    if (navMenu) navMenu.style.display = 'none';
-    if (btnLogout) btnLogout.style.display = 'none';
-    return;
-  }
+  if (mainContent) mainContent.style.display = 'block';
 
   // Update Points XP badge
   const pointsVal = document.getElementById('user-points-val');
   if (pointsVal) pointsVal.textContent = state.xp;
 
-  // Manage role active dashboard panel visibility
-  document.querySelectorAll('.role-dash').forEach(el => {
-    el.style.display = 'none';
-  });
-
-  if (state.role === 'fan') {
-    document.getElementById('fan-dash-layout').style.display = 'grid';
-    renderConcessionsOrder();
-  } else if (state.role === 'staff') {
-    document.getElementById('staff-dash-layout').style.display = 'grid';
-    renderStaffTasks();
-  } else if (state.role === 'organizer') {
-    document.getElementById('organizer-dash-layout').style.display = 'grid';
-    renderOrganizerIncidents();
-  }
-
-  const commuteDist = document.getElementById('commute-distance');
-  const commuteMethod = document.getElementById('commute-transit-method');
-  if (commuteDist && commuteMethod) {
-    commuteDist.value = state.transitDistance;
-    document.getElementById('commute-distance-val').textContent = state.transitDistance;
-    commuteMethod.value = state.transitMethod;
-  }
-
-  // Update Fan match ticket displays with detailed seating privileges
-  const ticketSummaryEl = document.getElementById('fan-ticket-summary');
-  if (ticketSummaryEl) {
-    if (state.ticketInfo && state.ticketInfo.verified) {
-      const tier = state.ticketInfo.tier || {};
-      const tierName = tier.name || 'Standard Seating';
-      const tierPrivs = tier.privileges || 'Standard stadium seating access.';
-      const recGate = tier.recommendedGate || state.ticketInfo.gate;
-      const catClass = (tier.category || 'standard').toLowerCase();
-
-      ticketSummaryEl.innerHTML = `
-        <div style="background: hsla(143, 85%, 43%, 0.05); padding:1rem; border-radius:var(--radius-sm); border:1px solid var(--success);">
-          <strong style="color:var(--success); font-size:0.95rem; display:block; margin-bottom:0.5rem;">✓ Verified Ticket - ${state.ticketInfo.matchNumber}</strong>
-          <span style="font-size:0.8rem; color:var(--text-secondary); display:block; line-height:1.5;">
-            <strong>Holder:</strong> ${state.ticketInfo.holderName}<br>
-            <strong>Seat:</strong> ${state.ticketInfo.seat} (${state.ticketInfo.sector})<br>
-            <strong>Tier Category:</strong> <span class="tier-privilege-badge tier-badge-${catClass}" style="margin-top:0;">${tierName}</span><br>
-            <strong>Privileges:</strong> ${tierPrivs}<br>
-            <strong>Recommended Gate:</strong> ${recGate}
-          </span>
-        </div>
-      `;
-    } else {
-      ticketSummaryEl.innerHTML = `
-        <div style="background: hsla(220, 20%, 25%, 0.2); padding:0.8rem; border-radius:var(--radius-sm); border:1px dashed var(--border-color); text-align:center;">
-          <span style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:0.5rem;">No Verified Ticket Registered</span>
-          <button class="btn btn-secondary" style="padding:0.4rem 0.8rem; font-size:0.75rem;" onclick="document.getElementById('nav-btn-verifier').click()" type="button">Register Ticket</button>
-        </div>
-      `;
-    }
-  }
-
+  renderOrganizerIncidents();
   renderDashboard();
   renderInsights();
-  updateTransitEstimations();
 }
 
 function renderDashboard() {
@@ -1268,12 +798,8 @@ function renderDashboard() {
     gateD: state.gateQueues.gateD.waitMinutes
   };
 
-  if (state.role === 'fan') {
-    renderBenchmarkChart('fan-queue-chart-target', waitGates);
-  } else if (state.role === 'organizer') {
-    renderBenchmarkChart('org-wait-chart-target', waitGates);
-    renderDonutChart('org-density-chart-target', state.sectorDensities);
-  }
+  renderBenchmarkChart('org-wait-chart-target', waitGates);
+  renderDonutChart('org-density-chart-target', state.sectorDensities);
 }
 
 function renderInsights() {
