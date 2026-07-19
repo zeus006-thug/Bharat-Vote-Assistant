@@ -140,6 +140,65 @@
             <!-- Programmatic SVG chart here -->
           </div>
         </div>
+
+        <!-- Concessions & Cashless Eco-Eats Ordering -->
+        <div class="card card-full" style="display: flex; flex-direction: column; margin-top: 1rem;">
+          <h3 class="card-title">🍔 Concessions & Cashless Eco-Eats</h3>
+          <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.25rem;">Order organic, sustainable, and local concessions cashless to expedite queues and log extra points.</p>
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+            <!-- Burger -->
+            <div class="card" style="padding: 1rem; background: var(--bg-surface-elevated); display: flex; flex-direction: column; gap: 0.5rem; border-color: var(--border-color);">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong style="color:var(--text-primary); font-size:0.95rem;">🍔 Eco-Pitmaster Burger</strong>
+                <span style="color:var(--accent); font-weight:700; font-size:0.9rem;">$14.00</span>
+              </div>
+              <span style="font-size:0.75rem; color:var(--text-muted);">Organic beef, zero-waste packaging, local buns. (Halal available)</span>
+              <button class="btn btn-secondary btn-order-item" data-item="Eco-Pitmaster Burger" data-price="14.00" data-xp="25" type="button" style="margin-top:auto; font-size:0.8rem; padding:0.5rem;">Add to Order</button>
+            </div>
+            
+            <!-- Hot Dog -->
+            <div class="card" style="padding: 1rem; background: var(--bg-surface-elevated); display: flex; flex-direction: column; gap: 0.5rem; border-color: var(--border-color);">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong style="color:var(--text-primary); font-size:0.95rem;">🌭 MetLife Plant Hot Dog</strong>
+                <span style="color:var(--accent); font-weight:700; font-size:0.9rem;">$9.00</span>
+              </div>
+              <span style="font-size:0.75rem; color:var(--text-muted);">100% plant-based, gluten-free option, sourced within NJ/NY.</span>
+              <button class="btn btn-secondary btn-order-item" data-item="MetLife Plant Hot Dog" data-price="9.00" data-xp="20" type="button" style="margin-top:auto; font-size:0.8rem; padding:0.5rem;">Add to Order</button>
+            </div>
+
+            <!-- Pretzel -->
+            <div class="card" style="padding: 1rem; background: var(--bg-surface-elevated); display: flex; flex-direction: column; gap: 0.5rem; border-color: var(--border-color);">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong style="color:var(--text-primary); font-size:0.95rem;">🥨 Zero-Waste Pretzel</strong>
+                <span style="color:var(--accent); font-weight:700; font-size:0.9rem;">$6.50</span>
+              </div>
+              <span style="font-size:0.75rem; color:var(--text-muted);">Local sourdough, recycled salt rub. Highly sustainable snack.</span>
+              <button class="btn btn-secondary btn-order-item" data-item="Zero-Waste Pretzel" data-price="6.50" data-xp="15" type="button" style="margin-top:auto; font-size:0.8rem; padding:0.5rem;">Add to Order</button>
+            </div>
+
+            <!-- Lemonade -->
+            <div class="card" style="padding: 1rem; background: var(--bg-surface-elevated); display: flex; flex-direction: column; gap: 0.5rem; border-color: var(--border-color);">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong style="color:var(--text-primary); font-size:0.95rem;">🍋 Organic Lemonade</strong>
+                <span style="color:var(--accent); font-weight:700; font-size:0.9rem;">$5.00</span>
+              </div>
+              <span style="font-size:0.75rem; color:var(--text-muted);">Fair-trade organic lemons, served in compostable corn cups.</span>
+              <button class="btn btn-secondary btn-order-item" data-item="Organic Lemonade" data-price="5.00" data-xp="10" type="button" style="margin-top:auto; font-size:0.8rem; padding:0.5rem;">Add to Order</button>
+            </div>
+          </div>
+
+          <div style="border-top:1px solid var(--border-color); padding-top:1rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+            <div id="concessions-order-status" style="font-size:0.85rem; color:var(--text-secondary);">
+              <em>No active order items selected. Click "Add to Order" to compile order.</em>
+            </div>
+            <button class="btn btn-primary" id="btn-concessions-checkout" type="button" style="display:none; font-size:0.85rem; padding:0.6rem 1.2rem;">💳 Pay Cashless & Earn XP</button>
+          </div>
+          
+          <div id="concessions-receipt-card" style="display:none; background:hsla(143, 85%, 43%, 0.05); border:1px solid var(--success); border-radius:var(--radius-sm); padding:1rem; margin-top:1rem; font-size:0.85rem; line-height:1.5;">
+            <!-- Receipt information -->
+          </div>
+        </div>
       </div>
 
       <!-- Staff/Volunteer Dashboard Layout -->

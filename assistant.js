@@ -9,7 +9,7 @@ async function loadGeminiSDK() {
   if (GoogleGenAISDK) return GoogleGenAISDK;
   try {
     const module = await import('https://esm.run/@google/generative-ai');
-    GoogleGenAISDK = module.GoogleGenAI;
+    GoogleGenAISDK = module.GoogleGenerativeAI;
     return GoogleGenAISDK;
   } catch (e) {
     console.warn("Failed to load Gemini SDK from CDN. Operating in local simulator mode.", e);
@@ -58,7 +58,7 @@ async function callGeminiAPI(prompt, role, apiKey) {
     throw new Error("Gemini Web SDK not initialized.");
   }
 
-  const ai = new sdk({ apiKey });
+  const ai = new sdk(apiKey);
   const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
 
   const systemInstructions = `
@@ -177,24 +177,27 @@ export async function getIncidentSynthesis(incidents = [], apiKey = "") {
 
   const logsString = unresolved.map(i => `[ID: ${i.id}, Class: ${i.type}, Loc: Sector ${(i.sector || 'unknown').toUpperCase()}, Notes: "${i.notes}"]`).join('\n');
 
-  if (apiKey && GoogleGenAISDK) {
+  if (apiKey) {
     try {
-      const ai = new GoogleGenAISDK({ apiKey });
-      const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
-      const prompt = `
-        You are Aegis Command Copilot for FIFA World Cup 2026 MetLife Stadium.
-        Analyze the following active incident reports.
-        1. Classify risk levels (Critical, Moderate, Low).
-        2. Generate a prioritize action plan indicating which teams (Security, Cleaners, Volunteers) should dispatch first.
-        3. Draft a coordinate memo for Stadium Command.
-        
-        Incident Logs:
-        ${logsString}
-        
-        Respond with clean, professional layout and bullets.
-      `;
-      const result = await model.generateContent(prompt);
-      return result.response.text();
+      const sdk = await loadGeminiSDK();
+      if (sdk) {
+        const ai = new sdk(apiKey);
+        const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const prompt = `
+          You are Aegis Command Copilot for FIFA World Cup 2026 MetLife Stadium.
+          Analyze the following active incident reports.
+          1. Classify risk levels (Critical, Moderate, Low).
+          2. Generate a prioritize action plan indicating which teams (Security, Cleaners, Volunteers) should dispatch first.
+          3. Draft a coordinate memo for Stadium Command.
+          
+          Incident Logs:
+          ${logsString}
+          
+          Respond with clean, professional layout and bullets.
+        `;
+        const result = await model.generateContent(prompt);
+        return result.response.text();
+      }
     } catch (err) {
       console.error("Gemini Incident Synthesis failed. Falling back to simulator.", err);
     }
