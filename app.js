@@ -1,6 +1,6 @@
-import { verifyTicket, generateTicketSignature, estimateTransit, calculateGateQueue, calculateXP } from './operations.js';
+import { verifyTicket, generateTicketSignature, findSeatTier, binarySearchIncidents, estimateTransit, calculateGateQueue, calculateXP } from './operations.js';
 import { renderDonutChart, renderBenchmarkChart } from './chart.js';
-import { getCoachResponse, getDashboardInsights } from './assistant.js';
+import { getCoachResponse, getDashboardInsights, getIncidentSynthesis } from './assistant.js';
 
 // --- STADIUM ACTIONS LIST ---
 const STADIUM_ACTIONS = {
@@ -33,7 +33,8 @@ let state = {
     gate: 'Gate A',
     seat: '',
     signature: '',
-    verified: false
+    verified: false,
+    tier: ''
   },
   transitMethod: 'transit',
   transitDistance: 12,
@@ -57,7 +58,8 @@ let state = {
   completedActions: [], // completed action IDs
   geminiApiKey: '',
   geminiModel: 'gemini-2.5-flash',
-  geminiTemp: 0.7
+  geminiTemp: 0.7,
+  gmapsApiKey: ''
 };
 
 // --- INITIALIZATION ---
@@ -72,9 +74,15 @@ document.addEventListener('DOMContentLoaded', () => {
   initChatbot();
   initActionPlanner();
   initInteractiveMap();
+  initAiAlertSynthesizer();
   
   // Render application
   renderApp();
+  
+  // Attempt loading Google Maps if API key is stored
+  if (state.gmapsApiKey) {
+    loadGoogleMapsScript(state.gmapsApiKey);
+  }
 });
 
 // --- STORAGE ---
@@ -128,6 +136,11 @@ function switchView(viewId) {
     renderInsights();
   } else if (viewId === 'planner') {
     initActionPlanner();
+  } else if (viewId === 'map') {
+    // If maps loaded, trigger simple resize/relayout checks
+    if (window.google && window.google.maps && state.gmapsApiKey) {
+      loadGoogleMapsScript(state.gmapsApiKey);
+    }
   }
 }
 
@@ -140,12 +153,14 @@ function initSettingsModal() {
   const btnClear = document.getElementById('btn-settings-clear');
 
   const apiKeyInput = document.getElementById('settings-gemini-key');
+  const gmapsKeyInput = document.getElementById('settings-gmaps-key');
   const modelSelect = document.getElementById('settings-model');
   const tempInput = document.getElementById('settings-temp');
 
   btnOpen.addEventListener('click', () => {
     // Populate fields
     apiKeyInput.value = state.geminiApiKey || '';
+    gmapsKeyInput.value = state.gmapsApiKey || '';
     modelSelect.value = state.geminiModel || 'gemini-2.5-flash';
     tempInput.value = state.geminiTemp || 0.7;
     modal.classList.add('active');
@@ -157,26 +172,172 @@ function initSettingsModal() {
 
   btnSave.addEventListener('click', () => {
     state.geminiApiKey = apiKeyInput.value.trim();
+    state.gmapsApiKey = gmapsKeyInput.value.trim();
     state.geminiModel = modelSelect.value;
     state.geminiTemp = parseFloat(tempInput.value) || 0.7;
     saveStateToStorage();
     modal.classList.remove('active');
     updateChatbotModeStatus();
     renderApp();
+
+    if (state.gmapsApiKey) {
+      loadGoogleMapsScript(state.gmapsApiKey);
+    } else {
+      // Hide google map if key was deleted
+      const canvas = document.getElementById('google-map-canvas');
+      const fallback = document.getElementById('svg-map-fallback');
+      if (canvas && fallback) {
+        canvas.style.display = 'none';
+        fallback.style.display = 'flex';
+      }
+    }
   });
 
   btnClear.addEventListener('click', () => {
     apiKeyInput.value = '';
+    gmapsKeyInput.value = '';
     state.geminiApiKey = '';
+    state.gmapsApiKey = '';
     saveStateToStorage();
     updateChatbotModeStatus();
-    alert("API Key cleared.");
+    
+    const canvas = document.getElementById('google-map-canvas');
+    const fallback = document.getElementById('svg-map-fallback');
+    if (canvas && fallback) {
+      canvas.style.display = 'none';
+      fallback.style.display = 'flex';
+    }
+    
+    alert("API Keys cleared.");
   });
 
   // Close modal when clicking outside of it
   window.addEventListener('click', (e) => {
     if (e.target === modal) {
       modal.classList.remove('active');
+    }
+  });
+}
+
+// --- GOOGLE MAPS API DYNAMIC LOADING ---
+function loadGoogleMapsScript(apiKey) {
+  if (!apiKey) return;
+  
+  if (window.google && window.google.maps) {
+    initGoogleMap();
+    return;
+  }
+
+  // Define global maps callback
+  window.initGoogleMap = initGoogleMap;
+
+  const script = document.createElement('script');
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initGoogleMap`;
+  script.async = true;
+  script.defer = true;
+  document.head.appendChild(script);
+}
+
+function initGoogleMap() {
+  const canvas = document.getElementById('google-map-canvas');
+  const fallback = document.getElementById('svg-map-fallback');
+
+  if (!canvas || !fallback) return;
+
+  canvas.style.display = 'block';
+  fallback.style.display = 'none';
+
+  // MetLife Stadium Center Coordinates
+  const metlifeCenter = { lat: 40.8135, lng: -74.0744 };
+
+  const map = new google.maps.Map(canvas, {
+    center: metlifeCenter,
+    zoom: 15,
+    mapId: 'DEMO_MAP_ID', // Enables modern vector map capabilities
+    styles: [
+      { elementType: "geometry", stylers: [{ color: "#1f1d2b" }] },
+      { elementType: "labels.text.stroke", stylers: [{ color: "#1f1d2b" }] },
+      { elementType: "labels.text.fill", stylers: [{ color: "#8e92bc" }] },
+      { featureType: "road", elementType: "geometry", stylers: [{ color: "#2d2a3e" }] },
+      { featureType: "water", elementType: "geometry", stylers: [{ color: "#0d0b18" }] }
+    ]
+  });
+
+  // Stadium Marker
+  const mainMarker = new google.maps.Marker({
+    position: metlifeCenter,
+    map: map,
+    title: "MetLife Stadium - FIFA World Cup 2026 Center",
+    icon: {
+      url: "https://maps.google.com/mapfiles/ms/icons/red-pushpin.png"
+    }
+  });
+
+  const mainInfoWindow = new google.maps.InfoWindow({
+    content: `<div style="color:#000; font-family:sans-serif; font-size:12px;"><strong>MetLife Arena 2026</strong><br>Capacity: 82,500. Matches: Match 10, Match 14.</div>`
+  });
+
+  mainMarker.addListener("click", () => {
+    mainInfoWindow.open(map, mainMarker);
+  });
+
+  // Gate Checkpoint markers mapping state queue times
+  const gates = [
+    { name: 'Gate A (North)', lat: 40.8160, lng: -74.0744, wait: state.gateQueues.gateA.waitMinutes },
+    { name: 'Gate B (East)', lat: 40.8135, lng: -74.0710, wait: state.gateQueues.gateB.waitMinutes },
+    { name: 'Gate C (South)', lat: 40.8110, lng: -74.0744, wait: state.gateQueues.gateC.waitMinutes },
+    { name: 'Gate D (West)', lat: 40.8135, lng: -74.0778, wait: state.gateQueues.gateD.waitMinutes }
+  ];
+
+  gates.forEach(gate => {
+    const markerColor = gate.wait > 25 ? 'red' : gate.wait > 10 ? 'orange' : 'green';
+    const marker = new google.maps.Marker({
+      position: { lat: gate.lat, lng: gate.lng },
+      map: map,
+      title: `${gate.name}: ${gate.wait} mins wait`,
+      icon: {
+        url: `https://maps.google.com/mapfiles/ms/icons/${markerColor}-dot.png`
+      }
+    });
+
+    const info = new google.maps.InfoWindow({
+      content: `<div style="color:#000; font-family:sans-serif; font-size:12px; line-height:1.4;">
+                  <strong>${gate.name} Checkpoint</strong><br>
+                  Queue Wait Time: <span style="font-weight:700; color:${gate.wait > 25 ? 'red' : gate.wait > 10 ? 'orange' : 'green'};">${gate.wait} minutes</span>
+                </div>`
+    });
+
+    marker.addListener("click", () => {
+      info.open(map, marker);
+    });
+  });
+}
+
+// --- AI ALERT SYNTHESIZER ---
+function initAiAlertSynthesizer() {
+  const btn = document.getElementById('btn-ai-synthesize-alerts');
+  const card = document.getElementById('ai-synthesis-output-card');
+
+  if (!btn || !card) return;
+
+  btn.addEventListener('click', async () => {
+    card.style.display = 'block';
+    card.innerHTML = `<span style="display:flex; align-items:center; gap:0.5rem;">
+                       <span class="typing-dot" style="background:var(--accent);"></span>
+                       Aegis Operations Copilot is synthesizing raw incidents and generating safety action plans...
+                     </span>`;
+    
+    try {
+      const synthesis = await getIncidentSynthesis(state.activeIncidents, state.geminiApiKey);
+      card.innerHTML = `
+        <strong style="color:var(--accent); font-size:0.9rem; display:block; margin-bottom:0.5rem; font-family:var(--font-display);">⚡ Aegis AI Operations Synthesis</strong>
+        <p style="margin:0;">${synthesis.replace(/\n/g, '<br>')}</p>
+      `;
+      state.xp += 15; // AI usage reward
+      renderApp();
+    } catch (err) {
+      console.error(err);
+      card.innerHTML = `<span style="color:var(--danger);">Failed to complete GenAI analysis. Ensure your Gemini API Key is configured in settings.</span>`;
     }
   });
 }
@@ -259,14 +420,23 @@ function initTicketVerifier() {
       signature: inputSignature.value.trim()
     };
 
-    // Clean outputs
     outputCard.style.display = 'block';
     outputCard.className = 'card';
 
     const result = verifyTicket(ticket);
     if (result.isValid) {
+      // Parse row number from Seat string (e.g. "Row 15, Seat 24" -> "15")
+      let rowNum = 0;
+      const rowMatch = ticket.seat.match(/Row\s+(\d+)/i);
+      if (rowMatch) {
+        rowNum = parseInt(rowMatch[1]) || 0;
+      }
+      
+      // OPTIMIZATION: Binary search seating tier lookup
+      const tierClassification = findSeatTier(rowNum);
+
       // Save ticket in state
-      state.ticketInfo = { ...ticket, verified: true };
+      state.ticketInfo = { ...ticket, verified: true, tier: tierClassification };
       state.xp += 50; // Verification XP award
       saveStateToStorage();
 
@@ -278,6 +448,7 @@ function initTicketVerifier() {
         <p style="font-size:0.85rem; color:var(--text-secondary);">
           Welcome, ${ticket.holderName}! Ticket successfully authenticated.<br>
           <strong>Your Seat:</strong> ${ticket.seat} (${ticket.sector})<br>
+          <strong>Seat Category:</strong> ${tierClassification}<br>
           <strong>Allocated Gate:</strong> ${ticket.gate}<br>
           <em>* Custom stadium navigation has been unlocked in your dashboard. (+50 XP Earned)*</em>
         </p>
@@ -453,7 +624,6 @@ async function submitTextQuery(text) {
     const coachResponse = await getCoachResponse(text, state, state.geminiApiKey);
     removeTypingIndicator();
     addMessageBubble(coachResponse.reply, 'assistant');
-    // Keep standard suggestion chips
   } catch (err) {
     console.error(err);
     removeTypingIndicator();
@@ -764,6 +934,9 @@ function renderOrganizerIncidents() {
 
   container.innerHTML = '';
 
+  // Sort incidents by incremental timestamp to support binary search lookup
+  state.activeIncidents.sort((a, b) => a.id.localeCompare(b.id));
+
   const openIncidents = state.activeIncidents.filter(i => i.status === 'open');
   if (badge) {
     badge.textContent = `${openIncidents.length} Open Alerts`;
@@ -776,7 +949,7 @@ function renderOrganizerIncidents() {
     return;
   }
 
-  state.activeIncidents.forEach((inc, index) => {
+  state.activeIncidents.forEach((inc) => {
     const li = document.createElement('li');
     li.className = `incident-item ${inc.status === 'resolved' ? 'resolved' : ''}`;
     
@@ -784,18 +957,22 @@ function renderOrganizerIncidents() {
       <div class="incident-text-wrap">
         <span class="incident-headline">${inc.type.toUpperCase()} - Sector ${inc.sector.toUpperCase()} (${inc.time})</span>
         <span class="incident-description">${inc.notes}</span>
-        <span style="font-size:0.7rem; font-weight:700; color:${inc.status === 'resolved' ? 'var(--success)' : 'var(--danger)'};">Status: ${inc.status.toUpperCase()}</span>
+        <span style="font-size:0.7rem; font-weight:700; color:${inc.status === 'resolved' ? 'var(--success)' : 'var(--danger)'}; font-family:monospace;">ID: ${inc.id}</span>
       </div>
-      ${inc.status === 'open' ? `<button class="btn btn-secondary" style="padding:0.3rem 0.6rem; font-size:0.75rem;" id="btn-resolve-inc-${index}" type="button">Resolve</button>` : ''}
+      ${inc.status === 'open' ? `<button class="btn btn-secondary" style="padding:0.3rem 0.6rem; font-size:0.75rem;" id="btn-resolve-${inc.id}" type="button">Resolve</button>` : ''}
     `;
 
     if (inc.status === 'open') {
-      li.querySelector(`#btn-resolve-inc-${index}`).addEventListener('click', () => {
-        state.activeIncidents[index].status = 'resolved';
-        state.xp += 30; // Organizer resolution XP
-        saveStateToStorage();
-        renderOrganizerIncidents();
-        renderApp();
+      li.querySelector(`#btn-resolve-${inc.id}`).addEventListener('click', () => {
+        // OPTIMIZATION: Use Binary Search to locate incident in the pre-sorted list
+        const matchInc = binarySearchIncidents(state.activeIncidents, inc.id);
+        if (matchInc) {
+          matchInc.status = 'resolved';
+          state.xp += 30; // Organizer resolution XP
+          saveStateToStorage();
+          renderOrganizerIncidents();
+          renderApp();
+        }
       });
     }
 
@@ -840,9 +1017,10 @@ function renderApp() {
       ticketSummaryEl.innerHTML = `
         <div style="background: hsla(143, 85%, 43%, 0.1); padding:0.8rem; border-radius:var(--radius-sm); border:1px solid var(--success);">
           <strong style="color:var(--success); font-size:0.95rem; display:block; margin-bottom:0.25rem;">✓ Verified - ${state.ticketInfo.matchNumber}</strong>
-          <span style="font-size:0.8rem; color:var(--text-secondary); display:block;">
+          <span style="font-size:0.8rem; color:var(--text-secondary); display:block; line-height:1.4;">
             <strong>Holder:</strong> ${state.ticketInfo.holderName}<br>
             <strong>Seat:</strong> ${state.ticketInfo.seat} | ${state.ticketInfo.sector}<br>
+            <strong>Seat Category:</strong> ${state.ticketInfo.tier || 'Standard Seating'}<br>
             <strong>Gate:</strong> Entry via ${state.ticketInfo.gate}
           </span>
         </div>
@@ -899,8 +1077,6 @@ function renderInsights() {
 
   insights.forEach(insight => {
     const item = document.createElement('div');
-    // Map custom colors
-    const borderClass = insight.type === 'critical' ? 'critical-border' : insight.type === 'positive' ? 'positive-border' : '';
     item.style.padding = '0.75rem 1rem';
     item.style.borderLeft = `4px solid ${insight.type === 'critical' ? 'var(--danger)' : insight.type === 'positive' ? 'var(--success)' : 'var(--info)'}`;
     item.style.background = 'var(--bg-surface-elevated)';

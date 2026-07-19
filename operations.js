@@ -6,6 +6,77 @@
 // Cryptographic Simulation Secret Key for ticket validation
 const TICKET_VERIFICATION_SALT = "FIFA_WC_2026_AEGIS_SECURE";
 
+// Seat tier partitions sorted by max row boundary
+const TIER_RANGES = [
+  { maxRow: 10, name: "Tier 1 (VIP Courtside)" },
+  { maxRow: 30, name: "Tier 2 (Club Seating)" },
+  { maxRow: 90, name: "Tier 3 (Main Bowl)" },
+  { maxRow: 150, name: "Tier 4 (Upper Deck)" }
+];
+
+/**
+ * Binary search to locate seating tier classification based on row number.
+ * Space Complexity: O(1)
+ * Time Complexity: O(log N) where N is the number of tier thresholds.
+ * @param {number} rowNum - Row number from the seat ticket
+ * @returns {string} Tier description name
+ */
+export function findSeatTier(rowNum) {
+  const row = Number(rowNum);
+  if (isNaN(row) || row <= 0 || row > 150) {
+    return "Unknown Tier";
+  }
+
+  let low = 0;
+  let high = TIER_RANGES.length - 1;
+  let result = "Unknown Tier";
+
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2);
+    if (TIER_RANGES[mid].maxRow >= row) {
+      result = TIER_RANGES[mid].name;
+      // Seek smaller threshold
+      high = mid - 1;
+    } else {
+      low = mid + 1;
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Binary search to locate a specific incident in a list sorted by ID (incremental).
+ * Space Complexity: O(1)
+ * Time Complexity: O(log M) where M is the number of incidents.
+ * @param {Array} incidents - Sorted list of incident objects
+ * @param {string} targetId - ID to look up
+ * @returns {Object|null} Matching incident object or null
+ */
+export function binarySearchIncidents(incidents, targetId) {
+  if (!Array.isArray(incidents) || incidents.length === 0 || !targetId) {
+    return null;
+  }
+
+  let low = 0;
+  let high = incidents.length - 1;
+
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2);
+    const midId = incidents[mid].id;
+
+    if (midId === targetId) {
+      return incidents[mid];
+    } else if (midId < targetId) {
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+
+  return null;
+}
+
 /**
  * Generates a mock cryptographic signature for a ticket
  * @param {Object} ticket - { ticketId, matchNumber, holderName, sector, gate, seat }
@@ -88,7 +159,7 @@ export function estimateTransit(method, distanceMiles, crowdState = 'moderate') 
   }
 
   const travelSpeed = baseSpeedMph / congestion.speedMultiplier;
-  const travelTimeMinutes = Math.round((dist / travelSpeed) * 60);
+  const travelTimeMinutes = Math.max(1, Math.round((dist / travelSpeed) * 60));
 
   const carbonKg = dist * emissionFactorKgPerMile;
   const baselineCarbonKg = dist * 0.404; // Baseline is driving a solo gasoline car

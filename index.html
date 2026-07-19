@@ -179,10 +179,16 @@
 
         <!-- Active Incidents Feed -->
         <div class="card card-wide" style="display: flex; flex-direction: column;">
-          <h3 class="card-title" style="justify-content: space-between;">
-            <span>🚨 Active Operations Log</span>
-            <span class="badge badge-danger" id="unresolved-incident-badge">0 Open Alerts</span>
-          </h3>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+            <h3 class="card-title" style="margin: 0; justify-content: space-between; flex-grow: 1;">
+              <span>🚨 Active Operations Log</span>
+              <span class="badge badge-danger" id="unresolved-incident-badge">0 Open Alerts</span>
+            </h3>
+            <button class="btn btn-primary" id="btn-ai-synthesize-alerts" type="button" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; height: fit-content;">✨ AI Synthesize & Prioritize Alerts</button>
+          </div>
+          <div id="ai-synthesis-output-card" style="display: none; background: hsla(275, 85%, 50%, 0.1); border: 1px solid var(--border-active); padding: 1.25rem; border-radius: var(--radius-sm); margin-bottom: 1rem; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; box-shadow: var(--shadow-sm); animation: fadeIn 0.3s ease;">
+            <!-- Dynamic AI Synthesis output -->
+          </div>
           <div class="incident-feed-container" style="flex-grow: 1; max-height: 200px; overflow-y: auto; padding-right: 0.5rem;">
             <ul id="organizer-incidents-list" style="display: flex; flex-direction: column; gap: 0.75rem; padding: 0;">
               <!-- Live incidents list -->
@@ -206,56 +212,61 @@
       <p style="color: var(--text-muted); margin-bottom: 2rem;">Click sectors inside the stadium layout to inspect crowd density, concession stands, and nearest accessibility routes.</p>
       
       <div class="calc-container">
-        <!-- SVG Interactive Map -->
-        <div class="card" style="display: flex; align-items: center; justify-content: center; min-height: 400px; background: radial-gradient(circle, var(--bg-surface-elevated) 0%, var(--bg-surface) 100%);">
-          <!-- MetLife Arena representation -->
-          <svg viewBox="0 0 500 500" width="100%" height="400px" style="max-width: 420px; overflow: visible;" id="stadium-interactive-svg" aria-label="Interactive Stadium Map">
-            <!-- Outer Stadium Ring -->
-            <rect x="25" y="25" width="450" height="450" rx="225" fill="none" stroke="var(--border-color)" stroke-width="8"/>
-            
-            <!-- Outer Gates -->
-            <circle cx="250" cy="15" r="14" fill="var(--bg-surface-elevated)" stroke="var(--info)" stroke-width="2" class="map-gate-marker" data-gate="Gate A" style="cursor: pointer;"/>
-            <text x="250" y="5" fill="var(--text-primary)" font-size="10" font-weight="700" text-anchor="middle">Gate A</text>
-            
-            <circle cx="485" cy="250" r="14" fill="var(--bg-surface-elevated)" stroke="var(--accent)" stroke-width="2" class="map-gate-marker" data-gate="Gate B" style="cursor: pointer;"/>
-            <text x="510" y="253" fill="var(--text-primary)" font-size="10" font-weight="700" text-anchor="middle">Gate B</text>
-            
-            <circle cx="250" cy="485" r="14" fill="var(--bg-surface-elevated)" stroke="var(--primary)" stroke-width="2" class="map-gate-marker" data-gate="Gate C" style="cursor: pointer;"/>
-            <text x="250" y="510" fill="var(--text-primary)" font-size="10" font-weight="700" text-anchor="middle">Gate C</text>
-            
-            <circle cx="15" cy="250" r="14" fill="var(--bg-surface-elevated)" stroke="var(--danger)" stroke-width="2" class="map-gate-marker" data-gate="Gate D" style="cursor: pointer;"/>
-            <text x="-12" y="253" fill="var(--text-primary)" font-size="10" font-weight="700" text-anchor="middle">Gate D</text>
-            
-            <!-- Stadium Seats Ring (Interactive Sectors) -->
-            <!-- North Sector Arc -->
-            <path d="M 125,125 A 176,176 0 0,1 375,125 L 350,150 A 141,141 0 0,0 150,150 Z" 
-                  fill="var(--info)" opacity="0.6" class="map-sector-path" data-sector="north" style="cursor: pointer; transition: opacity 0.2s;" role="button" aria-label="North Stand Sector"/>
-            <text x="250" y="110" fill="var(--text-primary)" font-size="12" font-weight="700" text-anchor="middle" pointer-events="none">North Stand</text>
-            
-            <!-- East Sector Arc -->
-            <path d="M 375,125 A 176,176 0 0,1 375,375 L 350,350 A 141,141 0 0,0 350,150 Z" 
-                  fill="var(--accent)" opacity="0.6" class="map-sector-path" data-sector="east" style="cursor: pointer; transition: opacity 0.2s;" role="button" aria-label="East Stand Sector"/>
-            <text x="390" y="254" fill="var(--text-primary)" font-size="12" font-weight="700" text-anchor="middle" pointer-events="none" transform="rotate(90 390 254)">East Stand</text>
+        <!-- Stadium Map Container supporting Google Maps & SVG fallbacks -->
+        <div class="card" style="padding: 0; overflow: hidden; min-height: 400px; position: relative;">
+          <!-- Live Google Map Canvas -->
+          <div id="google-map-canvas" style="display: none; width: 100%; height: 400px; border-radius: var(--radius-md);"></div>
+          <!-- SVG Interactive Fallback Map -->
+          <div id="svg-map-fallback" style="display: flex; align-items: center; justify-content: center; width: 100%; height: 400px; background: radial-gradient(circle, var(--bg-surface-elevated) 0%, var(--bg-surface) 100%); padding: 1.5rem;">
+            <!-- MetLife Arena representation -->
+            <svg viewBox="0 0 500 500" width="100%" height="400px" style="max-width: 420px; overflow: visible;" id="stadium-interactive-svg" aria-label="Interactive Stadium Map">
+              <!-- Outer Stadium Ring -->
+              <rect x="25" y="25" width="450" height="450" rx="225" fill="none" stroke="var(--border-color)" stroke-width="8"/>
+              
+              <!-- Outer Gates -->
+              <circle cx="250" cy="15" r="14" fill="var(--bg-surface-elevated)" stroke="var(--info)" stroke-width="2" class="map-gate-marker" data-gate="Gate A" style="cursor: pointer;"/>
+              <text x="250" y="5" fill="var(--text-primary)" font-size="10" font-weight="700" text-anchor="middle">Gate A</text>
+              
+              <circle cx="485" cy="250" r="14" fill="var(--bg-surface-elevated)" stroke="var(--accent)" stroke-width="2" class="map-gate-marker" data-gate="Gate B" style="cursor: pointer;"/>
+              <text x="510" y="253" fill="var(--text-primary)" font-size="10" font-weight="700" text-anchor="middle">Gate B</text>
+              
+              <circle cx="250" cy="485" r="14" fill="var(--bg-surface-elevated)" stroke="var(--primary)" stroke-width="2" class="map-gate-marker" data-gate="Gate C" style="cursor: pointer;"/>
+              <text x="250" y="510" fill="var(--text-primary)" font-size="10" font-weight="700" text-anchor="middle">Gate C</text>
+              
+              <circle cx="15" cy="250" r="14" fill="var(--bg-surface-elevated)" stroke="var(--danger)" stroke-width="2" class="map-gate-marker" data-gate="Gate D" style="cursor: pointer;"/>
+              <text x="-12" y="253" fill="var(--text-primary)" font-size="10" font-weight="700" text-anchor="middle">Gate D</text>
+              
+              <!-- Stadium Seats Ring (Interactive Sectors) -->
+              <!-- North Sector Arc -->
+              <path d="M 125,125 A 176,176 0 0,1 375,125 L 350,150 A 141,141 0 0,0 150,150 Z" 
+                    fill="var(--info)" opacity="0.6" class="map-sector-path" data-sector="north" style="cursor: pointer; transition: opacity 0.2s;" role="button" aria-label="North Stand Sector"/>
+              <text x="250" y="110" fill="var(--text-primary)" font-size="12" font-weight="700" text-anchor="middle" pointer-events="none">North Stand</text>
+              
+              <!-- East Sector Arc -->
+              <path d="M 375,125 A 176,176 0 0,1 375,375 L 350,350 A 141,141 0 0,0 350,150 Z" 
+                    fill="var(--accent)" opacity="0.6" class="map-sector-path" data-sector="east" style="cursor: pointer; transition: opacity 0.2s;" role="button" aria-label="East Stand Sector"/>
+              <text x="390" y="254" fill="var(--text-primary)" font-size="12" font-weight="700" text-anchor="middle" pointer-events="none" transform="rotate(90 390 254)">East Stand</text>
 
-            <!-- South Sector Arc -->
-            <path d="M 375,375 A 176,176 0 0,1 125,375 L 150,350 A 141,141 0 0,0 350,350 Z" 
-                  fill="var(--primary)" opacity="0.6" class="map-sector-path" data-sector="south" style="cursor: pointer; transition: opacity 0.2s;" role="button" aria-label="South Stand Sector"/>
-            <text x="250" y="400" fill="var(--text-primary)" font-size="12" font-weight="700" text-anchor="middle" pointer-events="none">South Stand</text>
-            
-            <!-- West Sector Arc -->
-            <path d="M 125,375 A 176,176 0 0,1 125,125 L 150,150 A 141,141 0 0,0 150,350 Z" 
-                  fill="var(--danger)" opacity="0.6" class="map-sector-path" data-sector="west" style="cursor: pointer; transition: opacity 0.2s;" role="button" aria-label="West Stand Sector"/>
-            <text x="110" y="254" fill="var(--text-primary)" font-size="12" font-weight="700" text-anchor="middle" pointer-events="none" transform="rotate(-90 110 254)">West Stand</text>
-            
-            <!-- Pitch (Center Field) -->
-            <rect x="170" y="190" width="160" height="120" rx="8" fill="hsl(142, 60%, 15%)" stroke="var(--primary)" stroke-width="2"/>
-            <!-- Goal Boxes -->
-            <rect x="170" y="225" width="20" height="50" fill="none" stroke="var(--primary)" stroke-width="1.5"/>
-            <rect x="310" y="225" width="20" height="50" fill="none" stroke="var(--primary)" stroke-width="1.5"/>
-            <circle cx="250" cy="250" r="24" fill="none" stroke="var(--primary)" stroke-width="1.5"/>
-            <circle cx="250" cy="250" r="3" fill="var(--primary)"/>
-            <text x="250" y="254" fill="var(--text-muted)" font-size="10" font-weight="600" text-anchor="middle" opacity="0.5">FIFA PITCH</text>
-          </svg>
+              <!-- South Sector Arc -->
+              <path d="M 375,375 A 176,176 0 0,1 125,375 L 150,350 A 141,141 0 0,0 350,350 Z" 
+                    fill="var(--primary)" opacity="0.6" class="map-sector-path" data-sector="south" style="cursor: pointer; transition: opacity 0.2s;" role="button" aria-label="South Stand Sector"/>
+              <text x="250" y="400" fill="var(--text-primary)" font-size="12" font-weight="700" text-anchor="middle" pointer-events="none">South Stand</text>
+              
+              <!-- West Sector Arc -->
+              <path d="M 125,375 A 176,176 0 0,1 125,125 L 150,150 A 141,141 0 0,0 150,350 Z" 
+                    fill="var(--danger)" opacity="0.6" class="map-sector-path" data-sector="west" style="cursor: pointer; transition: opacity 0.2s;" role="button" aria-label="West Stand Sector"/>
+              <text x="110" y="254" fill="var(--text-primary)" font-size="12" font-weight="700" text-anchor="middle" pointer-events="none" transform="rotate(-90 110 254)">West Stand</text>
+              
+              <!-- Pitch (Center Field) -->
+              <rect x="170" y="190" width="160" height="120" rx="8" fill="hsl(142, 60%, 15%)" stroke="var(--primary)" stroke-width="2"/>
+              <!-- Goal Boxes -->
+              <rect x="170" y="225" width="20" height="50" fill="none" stroke="var(--primary)" stroke-width="1.5"/>
+              <rect x="310" y="225" width="20" height="50" fill="none" stroke="var(--primary)" stroke-width="1.5"/>
+              <circle cx="250" cy="250" r="24" fill="none" stroke="var(--primary)" stroke-width="1.5"/>
+              <circle cx="250" cy="250" r="3" fill="var(--primary)"/>
+              <text x="250" y="254" fill="var(--text-muted)" font-size="10" font-weight="600" text-anchor="middle" opacity="0.5">FIFA PITCH</text>
+            </svg>
+          </div>
         </div>
 
         <!-- Sidebar Info Box -->
@@ -447,11 +458,19 @@
         <button id="btn-settings-close" class="btn-close-modal" type="button" aria-label="Close settings modal">×</button>
       </div>
       
-      <div class="form-group" style="margin-bottom: 1.25rem;">
+      <div class="form-group" style="margin-bottom: 1rem;">
         <label for="settings-gemini-key" class="form-label">Google Gemini API Key</label>
         <input type="password" id="settings-gemini-key" class="input-control" placeholder="AIzaSy...">
-        <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">
-          Your key is saved solely inside local browser storage and is never uploaded. Calls are made directly to Google API endpoints.
+        <p style="font-size:0.7rem; color:var(--text-muted); margin-top:0.25rem;">
+          Saved solely inside browser local storage. Calls are made directly to Google API endpoints.
+        </p>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="settings-gmaps-key" class="form-label">Google Maps API Key</label>
+        <input type="password" id="settings-gmaps-key" class="input-control" placeholder="AIzaSy...">
+        <p style="font-size:0.7rem; color:var(--text-muted); margin-top:0.25rem;">
+          Required to render live Google Maps stadium routes. Stored securely on-device.
         </p>
       </div>
 
