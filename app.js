@@ -83,6 +83,25 @@ document.addEventListener('DOMContentLoaded', () => {
   try { initAiAlertSynthesizer(); } catch (e) { console.error("initAiAlertSynthesizer error:", e); }
   try { initConcessionsHandlers(); } catch (e) { console.error("initConcessionsHandlers error:", e); }
   
+  // Register Service Worker for PWA cache management
+  if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => {
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // Instantly swap cache contents and reload
+                window.location.reload();
+              }
+            });
+          }
+        });
+      })
+      .catch(err => console.warn('Service Worker registration failed:', err));
+  }
+
   // Render application
   try { renderApp(); } catch (e) { console.error("renderApp error:", e); }
   
