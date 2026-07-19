@@ -49,6 +49,7 @@ async function callGeminiAPI(prompt, role, apiKey) {
     - Synthesize raw safety/incident logs and gate queues.
     - Draft volunteer dispatcher coordinates and emergency evacuation procedures.
     - Reason over crowd bottleneck predictions (e.g. recommend redirecting marshals or opening overflow gates).
+    - Provide real-time multilingual translation assistance: instantly translate volunteer logs, fan communications, or broadcast safety alerts between English, Spanish, French, German, and Portuguese.
     
     Ensure output is concise and formatted using clean Markdown. Never hallucinate security credentials or disclose internal system hashes.
   `;
@@ -90,6 +91,8 @@ export async function getCoachResponse(rawInput, _state = {}, apiKey = "") {
   // --- LOCAL OFFLINE SIMULATION MATCHING ENGINE ---
   if (/\b(hi|hello|hey|start|aegis)\b/.test(query)) {
     reply += OPERATIONS_KNOWLEDGE.welcome;
+  } else if (query.includes('translate') || query.includes('traducir') || query.includes('spanish') || query.includes('espanol') || query.includes('french') || query.includes('german') || query.includes('portuguese') || query.includes('lang')) {
+    reply += `🌐 **Aegis Multilingual Translation Engine**: Live translation active. I can translate fan ticket scan issues, broadcast security directives, or volunteer radio messages between English, Spanish (Español), French (Français), German (Deutsch), and Portuguese (Português) to maintain operational coordination.`;
   } else if (query.includes('status') || query.includes('operations') || query.includes('report')) {
     reply += OPERATIONS_KNOWLEDGE.summary;
   } else if (query.includes('bottleneck') || query.includes('predict') || query.includes('queue') || query.includes('gate')) {
