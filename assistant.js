@@ -5,11 +5,16 @@
 
 // Official Google Gemini API ESM Import with fallback safety
 let GoogleGenAISDK = null;
-try {
-  const module = await import('https://esm.run/@google/generative-ai');
-  GoogleGenAISDK = module.GoogleGenAI;
-} catch (e) {
-  console.warn("Failed to load Gemini SDK from CDN. Operating in local simulator mode.", e);
+async function loadGeminiSDK() {
+  if (GoogleGenAISDK) return GoogleGenAISDK;
+  try {
+    const module = await import('https://esm.run/@google/generative-ai');
+    GoogleGenAISDK = module.GoogleGenAI;
+    return GoogleGenAISDK;
+  } catch (e) {
+    console.warn("Failed to load Gemini SDK from CDN. Operating in local simulator mode.", e);
+    return null;
+  }
 }
 
 // Local Knowledge Base for Fallback Simulated Answers
@@ -48,11 +53,12 @@ const LOCAL_KNOWLEDGE = {
  * @returns {Promise<string>} Gemini response text
  */
 async function callGeminiAPI(prompt, role, apiKey) {
-  if (!GoogleGenAISDK) {
+  const sdk = await loadGeminiSDK();
+  if (!sdk) {
     throw new Error("Gemini Web SDK not initialized.");
   }
 
-  const ai = new GoogleGenAISDK({ apiKey });
+  const ai = new sdk({ apiKey });
   const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
 
   const systemInstructions = `

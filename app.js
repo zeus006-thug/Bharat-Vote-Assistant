@@ -64,24 +64,24 @@ let state = {
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
-  loadStateFromStorage();
-  initRouting();
-  initSettingsModal();
-  initRoleSwitcher();
-  initTicketVerifier();
-  initTransitPlanner();
-  initIncidentReporter();
-  initChatbot();
-  initActionPlanner();
-  initInteractiveMap();
-  initAiAlertSynthesizer();
+  try { loadStateFromStorage(); } catch (e) { console.error("loadStateFromStorage error:", e); }
+  try { initRouting(); } catch (e) { console.error("initRouting error:", e); }
+  try { initSettingsModal(); } catch (e) { console.error("initSettingsModal error:", e); }
+  try { initRoleSwitcher(); } catch (e) { console.error("initRoleSwitcher error:", e); }
+  try { initTicketVerifier(); } catch (e) { console.error("initTicketVerifier error:", e); }
+  try { initTransitPlanner(); } catch (e) { console.error("initTransitPlanner error:", e); }
+  try { initIncidentReporter(); } catch (e) { console.error("initIncidentReporter error:", e); }
+  try { initChatbot(); } catch (e) { console.error("initChatbot error:", e); }
+  try { initActionPlanner(); } catch (e) { console.error("initActionPlanner error:", e); }
+  try { initInteractiveMap(); } catch (e) { console.error("initInteractiveMap error:", e); }
+  try { initAiAlertSynthesizer(); } catch (e) { console.error("initAiAlertSynthesizer error:", e); }
   
   // Render application
-  renderApp();
+  try { renderApp(); } catch (e) { console.error("renderApp error:", e); }
   
   // Attempt loading Google Maps if API key is stored
   if (state.gmapsApiKey) {
-    loadGoogleMapsScript(state.gmapsApiKey);
+    try { loadGoogleMapsScript(state.gmapsApiKey); } catch (e) { console.error("loadGoogleMapsScript error:", e); }
   }
 });
 
@@ -94,7 +94,21 @@ function loadStateFromStorage() {
   const saved = localStorage.getItem('arenapulse_state');
   if (saved) {
     try {
-      state = { ...state, ...JSON.parse(saved) };
+      const parsed = JSON.parse(saved);
+      if (parsed && typeof parsed === 'object') {
+        if (Array.isArray(parsed.activeIncidents)) {
+          parsed.activeIncidents = parsed.activeIncidents.map(inc => ({
+            ...inc,
+            sector: inc.sector || 'north',
+            status: inc.status || 'open',
+            type: inc.type || 'spill',
+            notes: inc.notes || '',
+            id: inc.id || `inc-${Date.now()}`,
+            time: inc.time || '16:00'
+          }));
+        }
+        state = { ...state, ...parsed };
+      }
     } catch (e) {
       console.error("Corrupted state in localStorage. Resetting storage.", e);
     }
@@ -951,29 +965,39 @@ function renderOrganizerIncidents() {
 
   state.activeIncidents.forEach((inc) => {
     const li = document.createElement('li');
-    li.className = `incident-item ${inc.status === 'resolved' ? 'resolved' : ''}`;
+    const status = inc.status || 'open';
+    li.className = `incident-item ${status === 'resolved' ? 'resolved' : ''}`;
     
+    const typeText = (inc.type || 'unknown').toUpperCase();
+    const sectorText = (inc.sector || 'unknown').toUpperCase();
+    const timeText = inc.time || '';
+    const notesText = inc.notes || '';
+    const idText = inc.id || '';
+
     li.innerHTML = `
       <div class="incident-text-wrap">
-        <span class="incident-headline">${inc.type.toUpperCase()} - Sector ${inc.sector.toUpperCase()} (${inc.time})</span>
-        <span class="incident-description">${inc.notes}</span>
-        <span style="font-size:0.7rem; font-weight:700; color:${inc.status === 'resolved' ? 'var(--success)' : 'var(--danger)'}; font-family:monospace;">ID: ${inc.id}</span>
+        <span class="incident-headline">${typeText} - Sector ${sectorText} (${timeText})</span>
+        <span class="incident-description">${notesText}</span>
+        <span style="font-size:0.7rem; font-weight:700; color:${status === 'resolved' ? 'var(--success)' : 'var(--danger)'}; font-family:monospace;">ID: ${idText}</span>
       </div>
-      ${inc.status === 'open' ? `<button class="btn btn-secondary" style="padding:0.3rem 0.6rem; font-size:0.75rem;" id="btn-resolve-${inc.id}" type="button">Resolve</button>` : ''}
+      ${status === 'open' ? `<button class="btn btn-secondary" style="padding:0.3rem 0.6rem; font-size:0.75rem;" id="btn-resolve-${idText}" type="button">Resolve</button>` : ''}
     `;
 
-    if (inc.status === 'open') {
-      li.querySelector(`#btn-resolve-${inc.id}`).addEventListener('click', () => {
-        // OPTIMIZATION: Use Binary Search to locate incident in the pre-sorted list
-        const matchInc = binarySearchIncidents(state.activeIncidents, inc.id);
-        if (matchInc) {
-          matchInc.status = 'resolved';
-          state.xp += 30; // Organizer resolution XP
-          saveStateToStorage();
-          renderOrganizerIncidents();
-          renderApp();
-        }
-      });
+    if (status === 'open') {
+      const btnResolve = li.querySelector(`#btn-resolve-${idText}`);
+      if (btnResolve) {
+        btnResolve.addEventListener('click', () => {
+          // OPTIMIZATION: Use Binary Search to locate incident in the pre-sorted list
+          const matchInc = binarySearchIncidents(state.activeIncidents, idText);
+          if (matchInc) {
+            matchInc.status = 'resolved';
+            state.xp += 30; // Organizer resolution XP
+            saveStateToStorage();
+            renderOrganizerIncidents();
+            renderApp();
+          }
+        });
+      }
     }
 
     container.appendChild(li);
