@@ -1,10 +1,10 @@
-const CACHE_NAME = 'ecopulse-cache-v1';
+const CACHE_NAME = 'arenapulse-cache-v1';
 const ASSETS = [
   './',
   './index.html',
   './index.css',
   './app.js',
-  './calculator.js',
+  './operations.js',
   './chart.js',
   './assistant.js',
   './manifest.json',

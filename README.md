@@ -1,82 +1,71 @@
-# EcoPulse — Carbon Footprint Tracker & Assistant
+# ArenaPulse AI — FIFA World Cup 2026 Smart Stadium Platform
 
-EcoPulse is a state-of-the-art, high-security carbon footprint tracker and coaching system designed for urban professionals. Built for the Prompt Wars Challenge, it is a fully client-side Single Page Application (SPA) that operates with **Zero-Knowledge Privacy** — storing all data locally in the browser's sandbox (`localStorage`) and requiring zero network APIs, external libraries, or trackers.
+ArenaPulse AI is a high-security, GenAI-enabled Single Page Application (SPA) designed to enhance stadium operations and the overall tournament experience for fans, volunteer staff, and venue organizers during the **FIFA World Cup 2026**. 
+
+Built for the Prompt Wars Challenge 4, the platform integrates **official Google developer tools** (such as the Google Gemini API Web SDK `@google/generative-ai` and Google Fonts) to provide real-time crowd management, intelligent navigation guidance, emergency protocols, and on-device secure ticket verification.
+
+---
 
 ## 🎯 Chosen Vertical & Persona
-- **Chosen Vertical**: Personal Carbon Coaching & Lifestyle Optimization for Urban Professionals.
-- **Target Persona**: The busy urban professional who wants to make a real, measurable contribution to climate action but has limited time. They need immediate, clear carbon calculations, structured daily targets, and gamified progress without compromising their personal data privacy.
+Our solution addresses the **Stadium Operations & Fan Experience** vertical. Instead of restricting the platform to a single persona, ArenaPulse AI dynamically adapts to three roles via a premium role switcher:
+1. **The Tournament Fan**: Needs seamless gate navigation, transit guides, accessibility assistance, multilingual translations, and cashless concession directories.
+2. **The Volunteer Staff**: Needs actionable safety sweep checklists, lost-and-found child safety protocols, queue dispersion procedures, and an incident reporting interface.
+3. **The Venue Organizer**: Needs global stadium capacity overviews, live gate congestion charts, volunteer allocations, and an active incident resolution command log.
 
 ---
 
 ## 🛠️ Approach and Logic
 
-### 1. Calculation Engine (`calculator.js`)
-EcoPulse uses carbon intensity parameters derived from **EPA (US Environmental Protection Agency)** and **IPCC** methodologies to convert activities into Metric Tons of CO2 equivalent ($tCO_2e$) per year:
-- **Transportation**:
-  - Cars: Gasoline (~0.404 kg/mi), Diesel (~0.420 kg/mi), Hybrid (~0.210 kg/mi), and Electric (~0.110 kg/mi, accounting for national grid mix).
-  - Public Transit: Bus/Train average (~0.089 kg/mi per passenger).
-  - Aviation: Evaluated by flights taken. Short-haul (~500 mi roundtrip at 0.225 kg/mi), Medium-haul (~2000 mi roundtrip at 0.150 kg/mi), and Long-haul (~6000 mi roundtrip at 0.130 kg/mi).
-- **Home Energy**:
-  - Electricity: Monthly bill converted to kWh using average rates ($0.16/kWh) and grid emissions factor (0.371 kg/kWh). Adjusts for renewable/solar share offsets.
-  - Gas: Monthly bill converted to therms ($1.20/therm) and combustion emissions factor (5.306 kg/therm).
-- **Diet & Food**:
-  - Base footprint scale (Heavy Meat: 3.3t, Mixed Diet: 2.5t, Low Meat: 1.9t, Vegetarian: 1.4t, Vegan: 1.0t) adjusted dynamically by ±15% based on self-reported food waste behavior.
-- **Consumption & Waste**:
-  - Baseline buying habits (Minimalist: 0.6t, Moderate: 1.4t, Intensive: 2.8t) offset by active recycling habits (up to -0.21t deduction for recycling paper, plastics, glass, and metal).
+### 1. On-Device Cryptographic Ticket Verifier (`operations.js`)
+To simulate high security and block counterfeit admissions at screening points:
+* Standard tickets are parsed against format checks (matching the `WC2026-[A-Z0-9]{4}-[A-Z0-9]{5}` regex).
+* Each valid ticket is validated by computing a simulated SHA/HMAC hash of its contents: `ticketId + matchNumber + holderName + sector + gate + seat` concatenated with a secure salt.
+* The verifier checks this computed signature against the inputs on-device. When authenticated, it unlocks a customized seat direction card in the Fan Dashboard.
 
-### 2. Smart Sustainability Coach (`assistant.js`)
-To align with high-security constraints and eliminate public API key exposure, the virtual assistant **"Eco"** runs a client-side rules engine. It parses the user's footprint outputs dynamically:
-- Evaluates which category (Transport, Energy, Diet, Shopping) represents the user's highest emission source.
-- Triggers context-aware suggestions (e.g., if Transport emissions exceed 4.0t, it prompts for specific active-commute shifts).
-- Simulates natural chat flows (with typing indicators) and provides suggestion chips for rapid navigation.
+### 2. Smart Multilingual Assistant "Aegis" (`assistant.js`)
+* **Live Google Gemini Mode**: If a user configures their Google Gemini API Key in the Settings Panel (⚙️), the app imports the official `@google/generative-ai` client-side Web SDK via an ESM loader. It runs queries against the `gemini-2.5-flash` model, using targeted system prompts injected with the active user role (`fan`, `staff`, or `organizer`).
+* **Offline Fallback Simulator**: To ensure high availability and prevent failures when offline or without an API key, Aegis uses a regex keyword matcher mapping queries to MetLife Stadium's localized rules.
 
-### 3. Lightweight SVG Chart Library (`chart.js`)
-Instead of importing large graphing frameworks, EcoPulse generates vector SVGs programmatically in JavaScript. This keeps the application size **under 100KB** (well below the 10MB challenge limit) and prevents external script injection vulnerabilities.
+### 3. Programmatic SVG Analytics (`chart.js`)
+To avoid large graphing packages and prevent security vulnerabilities (like external script injection vectors), the charts are rendered dynamically as scalable vector SVGs in pure JavaScript:
+* **Gate Queue Wait Times (Bar Chart)**: Color-codes entry checkpoints (Green < 10 mins, Gold 10–25 mins, Red > 25 mins) based on people in queue.
+* **Stand Occupancy (Donut Chart)**: Visualizes crowd density in North, East, South, and West stands with hover-interactive details.
 
 ---
 
-## 🔒 High-Security Implementation
-Security and safety are core architectural constraints of EcoPulse:
-1. **Zero Cloud Transmission**: 100% of user profile inputs and footprint data stay inside the client browser. No cloud backend, databases, or cookies are used.
-2. **Content Security Policy (CSP)**: Strict headers restrict style/script execution to self-source and trusted Google Font assets.
-3. **XSS Protection**: Complete avoidance of `innerHTML` or `eval()`. Chat input is strictly escaped, and text elements are generated using `textContent` and safe DOM node creation.
+## 🔒 High-Security & Verification Implementation
+Security is a core design constraint of ArenaPulse AI:
+1. **Zero Cloud Key Exposure**: The Google Gemini API key is stored strictly in browser `localStorage`. It is never transmitted to intermediate servers; requests go directly to Google's official API endpoint (`https://generativelanguage.googleapis.com`).
+2. **Strict Content Security Policy (CSP)**: Headers restrict stylesheet/script execution. Connect rules are locked to self-source and official Google API domains, preventing XSS and injection attacks.
+3. **Input Sanitization**: All chat prompts, ticket verifications, and incident report notes are strictly escaped (`/&/g`, `/</g`, `/>/g`) before rendering to the DOM.
 
 ---
 
 ## ♿ Inclusive Accessibility (a11y)
-- **Keyboard Friendly**: Custom inputs and navigation buttons use accessible focus rings. Skip-to-content anchors are provided for keyboard-only users.
-- **Screen Reader Support**: Invisible ARIA tables are rendered alongside custom SVG charts, mapping data points into clear tabular format for screen readers via `aria-describedby` links.
-- **Color Contrast**: Complies with WCAG AA requirements, using high-contrast forest greens, golds, and slates.
-
----
-
-## 📱 Responsive Device Layout (Responsiveness)
-- **Mobile Adaptation**: Fully responsive grids, stacked headers, and flexible navigation menus adapt seamlessly to viewports down to 320px wide (mobile screens, tablets, and desktops).
-- **Touch-Friendly Controls**: Interactive cards, slide inputs, and chatbot suggestion chips are optimized for touch-based mobile interactions.
+* **Screen Reader Support**: Hidden `aria-describedby` tables are updated dynamically alongside SVG charts, mapping data points into readable tabular descriptions.
+* **Keyboard Friendly**: Navigations, dropdown menus, range sliders, and inputs are built using native HTML5 elements with focus indicator rings.
+* **Color Contrast**: Follows WCAG AA standards using high-contrast neon highlights set against a deep indigo-violet dark theme.
 
 ---
 
 ## 📋 Key Assumptions Made
-- Average electricity cost is assumed to be **$0.16 per kWh** globally.
-- Average natural gas cost is assumed to be **$1.20 per therm**.
-- Flight segments are modeled on fixed averages: Short-haul (500 miles round trip), Medium-haul (2000 miles round trip), and Long-haul (6000 miles round trip).
-- Reductions from committing to green actions are projected offset savings subtracted from the starting baseline calculated in the wizard.
+* **Stadium Context**: Real-time directions and transit guides are modeled on **MetLife Stadium (New York/New Jersey)** as a key FIFA World Cup 2026 venue.
+* **Transit Math**: solo driving base speed is set to 30mph, rail transit speed is 25mph. Wait times are calculated at 0.12 mins per person in queue under moderate congestion.
+* **PWA Offline caching**: Files list includes operations, charts, assistant modules, manifest, and logos for offline gate verification.
 
 ---
 
 ## 🚀 How the Solution Works
-1. **Complete the Profile**: Open the **Calculator** tab and fill out the transportation, energy, diet, and shopping sections.
-2. **Review the Dashboard**: Check your net carbon total, benchmark comparison, and category distribution charts.
-3. **Talk to Eco**: Open the **Smart Coach** chat. Ask questions or click suggestion chips to get immediate, context-based coaching tips.
-4. **Commit & Complete**: Navigate to the **Action Planner**. Commit to green tasks. Once you complete an action, click check (✓) to log your XP points and unlock achievement Badges.
+1. **Select a Role**: Toggle between **Fan**, **Staff**, or **Organizer** in the top navigation role dropdown.
+2. **Verify a Ticket (Fan)**: Navigate to **Ticket Verifier**. Click "Generate Test Ticket" to see a mock ticket. Copy the cryptographic signature, enter details, and click verify to unlock customized seat navigation on your dashboard.
+3. **Report Incidents (Staff)**: Switch to the Staff role, complete the safety checks, or log a spill/medical incident.
+4. **Resolve Issues (Organizer)**: Switch to the Organizer role to review the live SVG dashboard charts and click "Resolve" to clear active volunteer-reported hazards.
+5. **Chat with Aegis**: Enter your Google Gemini API Key in the Settings (⚙️) panel to chat with live GenAI, or query the offline simulated chatbot.
 
 ---
 
-## 🧪 Validating Math and Logic
-EcoPulse includes a pre-packaged unit test script `test.mjs` running in Node.js. It tests multiple carbon profiles and benchmark scores:
+## 🧪 Validating Functionality
+Run the built-in Node.js assertion test suite to verify ticket validation algorithms, transit maths, and alert calculations:
 ```bash
 node test.mjs
 ```
-
-## 📄 License
-EcoPulse is open-source and licensed under the **MIT License**.

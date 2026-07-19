@@ -1,95 +1,105 @@
 /**
- * EcoPulse - Client-Side SVG Chart Renderer
+ * ArenaPulse AI - SVG Chart Renderer for Stadium Analytics
  * Light, fast, accessible, secure, and 100% self-contained.
  */
 
-// Category styles & colors matching CSS theme variables
-const CATEGORY_STYLES = {
-  transport: { label: 'Transport', color: 'var(--info)', icon: '🚗' }, // Info blue
-  energy: { label: 'Energy', color: 'var(--accent)', icon: '⚡' },     // Accent Gold
-  food: { label: 'Diet & Food', color: 'var(--primary)', icon: '🥗' },  // Primary Green
-  consumption: { label: 'Shopping', color: 'var(--danger)', icon: '🛍️' } // Danger Red
+// Colors matching stadium congestion statuses
+const STATUS_COLORS = {
+  success: 'var(--success)', // Green
+  accent: 'var(--accent)',   // Gold/Orange
+  danger: 'var(--danger)',   // Red
+  info: 'var(--info)'        // Blue
+};
+
+const SECTOR_STYLES = {
+  north: { label: 'North Stand', color: 'var(--info)', icon: '🟦' },
+  east: { label: 'East Stand', color: 'var(--accent)', icon: '🟨' },
+  south: { label: 'South Stand', color: 'var(--primary)', icon: '🟩' },
+  west: { label: 'West Stand', color: 'var(--danger)', icon: '🟥' }
 };
 
 /**
- * Renders a responsive Donut Chart inside a container
+ * Renders a Donut Chart representing Stadium Sector Crowd Densities
  * @param {string} containerId - Element ID to render into
- * @param {Object} breakdown - Object containing { transport, energy, food, consumption } in tons
+ * @param {Object} densities - { north, east, south, west } representing capacity percent (0-100)
  */
-export function renderDonutChart(containerId, breakdown) {
+export function renderDonutChart(containerId, densities) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  // Clear previous content
   container.innerHTML = '';
 
-  const total = Object.values(breakdown).reduce((sum, val) => sum + val, 0);
+  const sectors = Object.keys(densities);
+  const totalDensity = sectors.reduce((sum, k) => sum + densities[k], 0);
   
-  if (total === 0) {
-    container.innerHTML = '<div style="color: var(--text-muted);">No carbon footprint data to display. Please complete the calculator.</div>';
+  if (totalDensity === 0) {
+    container.innerHTML = '<div style="color: var(--text-muted); text-align: center;">No sector density data available.</div>';
     return;
   }
 
-  // Create responsive SVG element
+  // Create responsive SVG
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('viewBox', '0 0 360 220');
   svg.setAttribute('width', '100%');
   svg.setAttribute('height', '100%');
   svg.style.overflow = 'visible';
 
-  // Screen reader table for accessibility
+  // Accessibility summary
   const a11ySummary = document.createElement('div');
   a11ySummary.className = 'chart-description';
   a11ySummary.id = `${containerId}-summary`;
-  a11ySummary.textContent = `A breakdown of carbon emissions: Transport ${breakdown.transport} tons, Energy ${breakdown.energy} tons, Food ${breakdown.food} tons, Shopping ${breakdown.consumption} tons. Total footprint is ${total} tons CO2 equivalent per year.`;
+  a11ySummary.textContent = `Donut chart of stadium stands occupancy: North ${densities.north}%, East ${densities.east}%, South ${densities.south}%, West ${densities.west}%.`;
   container.appendChild(a11ySummary);
   svg.setAttribute('aria-describedby', `${containerId}-summary`);
   svg.setAttribute('role', 'img');
 
-  // Math for Donut Ring
   const radius = 60;
   const strokeWidth = 16;
   const cx = 110;
   const cy = 110;
   const circumference = 2 * Math.PI * radius;
-  
+
+  // Render donut ring segments (equally spaced segments showing fill ratios)
   let currentOffset = 0;
   const chartGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-  chartGroup.setAttribute('transform', 'rotate(-90 110 110)'); // Start from top
+  chartGroup.setAttribute('transform', 'rotate(-90 110 110)');
 
-  // Create segments
-  Object.keys(breakdown).forEach((key) => {
-    const value = breakdown[key];
-    if (value <= 0) return;
-    
-    const percentage = value / total;
-    const strokeDash = percentage * circumference;
-    
+  const segmentLength = circumference / sectors.length;
+
+  sectors.forEach((key) => {
+    const fillPercent = densities[key] / 100;
+    const strokeDash = segmentLength; // Uniform arcs
+
     const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
     circle.setAttribute('cx', String(cx));
     circle.setAttribute('cy', String(cy));
     circle.setAttribute('r', String(radius));
     circle.setAttribute('fill', 'none');
-    circle.setAttribute('stroke', CATEGORY_STYLES[key].color);
+    
+    // Scale color brightness based on density
+    const color = SECTOR_STYLES[key].color;
+    circle.setAttribute('stroke', color);
     circle.setAttribute('stroke-width', String(strokeWidth));
-    circle.setAttribute('stroke-dasharray', `${strokeDash} ${circumference}`);
+    // Gap size creates individual blocks
+    circle.setAttribute('stroke-dasharray', `${strokeDash - 2} ${circumference - strokeDash + 2}`);
     circle.setAttribute('stroke-dashoffset', String(currentOffset));
     circle.setAttribute('class', 'donut-segment');
     circle.style.transition = 'stroke-width 0.2s ease, opacity 0.2s ease';
     circle.style.cursor = 'pointer';
+    circle.style.opacity = String(0.4 + (fillPercent * 0.6)); // denser = brighter
 
-    // Interactive hover triggers
+    // Interactive hovers
     circle.addEventListener('mouseenter', () => {
       circle.setAttribute('stroke-width', String(strokeWidth + 4));
-      // Display hover info in center text if wanted
-      document.getElementById(`${containerId}-center-val`).textContent = `${value.toFixed(1)} t`;
-      document.getElementById(`${containerId}-center-label`).textContent = CATEGORY_STYLES[key].label;
+      document.getElementById(`${containerId}-center-val`).textContent = `${densities[key]}%`;
+      document.getElementById(`${containerId}-center-label`).textContent = SECTOR_STYLES[key].label;
     });
 
     circle.addEventListener('mouseleave', () => {
       circle.setAttribute('stroke-width', String(strokeWidth));
-      document.getElementById(`${containerId}-center-val`).textContent = `${total.toFixed(1)} t`;
-      document.getElementById(`${containerId}-center-label`).textContent = 'Total / Year';
+      const avg = Math.round(totalDensity / sectors.length);
+      document.getElementById(`${containerId}-center-val`).textContent = `${avg}%`;
+      document.getElementById(`${containerId}-center-label`).textContent = 'Avg Occupancy';
     });
 
     chartGroup.appendChild(circle);
@@ -98,9 +108,10 @@ export function renderDonutChart(containerId, breakdown) {
 
   svg.appendChild(chartGroup);
 
-  // Center Text in Donut
+  // Center occupancy text
   const centerTextGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-  
+  const avgOccupancy = Math.round(totalDensity / sectors.length);
+
   const centerVal = document.createElementNS('http://www.w3.org/2000/svg', 'text');
   centerVal.setAttribute('x', String(cx));
   centerVal.setAttribute('y', String(cy + 4));
@@ -110,8 +121,8 @@ export function renderDonutChart(containerId, breakdown) {
   centerVal.setAttribute('font-family', 'var(--font-display)');
   centerVal.setAttribute('font-weight', '700');
   centerVal.setAttribute('font-size', '20px');
-  centerVal.textContent = `${total.toFixed(1)} t`;
-  
+  centerVal.textContent = `${avgOccupancy}%`;
+
   const centerLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
   centerLabel.setAttribute('x', String(cx));
   centerLabel.setAttribute('y', String(cy + 20));
@@ -121,7 +132,7 @@ export function renderDonutChart(containerId, breakdown) {
   centerLabel.setAttribute('font-family', 'var(--font-body)');
   centerLabel.setAttribute('font-size', '10px');
   centerLabel.setAttribute('font-weight', '600');
-  centerLabel.textContent = 'Total / Year';
+  centerLabel.textContent = 'Avg Occupancy';
 
   centerTextGroup.appendChild(centerVal);
   centerTextGroup.appendChild(centerLabel);
@@ -129,24 +140,21 @@ export function renderDonutChart(containerId, breakdown) {
 
   // Render Legend
   const legendGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-  legendGroup.setAttribute('transform', 'translate(220, 45)');
-  
+  legendGroup.setAttribute('transform', 'translate(210, 45)');
+
   let legendOffset = 0;
-  Object.keys(breakdown).forEach((key) => {
-    const value = breakdown[key];
-    const pct = ((value / total) * 100).toFixed(0);
-    
+  sectors.forEach((key) => {
+    const val = densities[key];
     const legendItem = document.createElementNS('http://www.w3.org/2000/svg', 'g');
     legendItem.setAttribute('transform', `translate(0, ${legendOffset})`);
-    
-    // Colored box indicator
+
     const dot = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     dot.setAttribute('width', '12');
     dot.setAttribute('height', '12');
     dot.setAttribute('rx', '3');
-    dot.setAttribute('fill', CATEGORY_STYLES[key].color);
-    
-    // Text Label
+    dot.setAttribute('fill', SECTOR_STYLES[key].color);
+    dot.style.opacity = String(0.4 + (val / 100 * 0.6));
+
     const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
     text.setAttribute('x', '20');
     text.setAttribute('y', '10');
@@ -154,12 +162,11 @@ export function renderDonutChart(containerId, breakdown) {
     text.setAttribute('font-family', 'var(--font-body)');
     text.setAttribute('font-size', '11px');
     text.setAttribute('font-weight', '500');
-    text.textContent = `${CATEGORY_STYLES[key].icon} ${CATEGORY_STYLES[key].label} (${pct}%)`;
+    text.textContent = `${SECTOR_STYLES[key].icon} ${SECTOR_STYLES[key].label} (${val}%)`;
 
     legendItem.appendChild(dot);
     legendItem.appendChild(text);
     legendGroup.appendChild(legendItem);
-    
     legendOffset += 26;
   });
 
@@ -168,28 +175,27 @@ export function renderDonutChart(containerId, breakdown) {
 }
 
 /**
- * Renders a Bar Chart comparing the user footprint with standard benchmarks
+ * Renders a Bar Chart showing Gate Queue Wait Times
  * @param {string} containerId - Element ID to render into
- * @param {number} userTotal - User's carbon total in tCO2e/year
+ * @param {Object} queueData - { gateA: waitTimeMin, gateB, gateC, gateD }
  */
-export function renderBenchmarkChart(containerId, userTotal) {
+export function renderBenchmarkChart(containerId, queueData) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
   container.innerHTML = '';
 
-  const benchmarks = [
-    { key: 'target', label: 'Paris Target', value: 2.0, color: 'var(--primary)' }, // Primary Green variable
-    { key: 'global', label: 'Global Avg', value: 4.5, color: 'var(--info)' },      // Info Blue variable
-    { key: 'user', label: 'You (EcoPulse)', value: userTotal, color: 'var(--accent)' }, // Accent Gold variable
-    { key: 'usa', label: 'US Average', value: 16.0, color: 'var(--danger)' }        // Danger Red variable
+  const gates = [
+    { key: 'gateA', label: 'Gate A (North)', value: queueData.gateA || 0 },
+    { key: 'gateB', label: 'Gate B (East)', value: queueData.gateB || 0 },
+    { key: 'gateC', label: 'Gate C (South)', value: queueData.gateC || 0 },
+    { key: 'gateD', label: 'Gate D (West)', value: queueData.gateD || 0 }
   ];
 
-  // Screen reader table for accessibility
   const a11ySummary = document.createElement('div');
   a11ySummary.className = 'chart-description';
   a11ySummary.id = `${containerId}-summary`;
-  a11ySummary.textContent = `A comparison of your footprint against standard benchmarks: Paris Target 2.0 tons, Global Average 4.5 tons, Your footprint ${userTotal} tons, US Average 16.0 tons CO2 equivalent per year.`;
+  a11ySummary.textContent = `Bar chart of gate queue wait times: Gate A ${gates[0].value} mins, Gate B ${gates[1].value} mins, Gate C ${gates[2].value} mins, Gate D ${gates[3].value} mins.`;
   container.appendChild(a11ySummary);
 
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -200,31 +206,39 @@ export function renderBenchmarkChart(containerId, userTotal) {
   svg.setAttribute('role', 'img');
   svg.style.overflow = 'visible';
 
-  const chartX = 90;
-  const chartWidth = 280;
-  const maxValue = Math.max(16.0, userTotal * 1.15); // Adjust scale based on user footprint
+  const chartX = 100;
+  const chartWidth = 260;
+  // Maximum scale baseline: at least 30 mins to avoid giant bars for tiny times
+  const maxValue = Math.max(30, ...gates.map(g => g.value) * 1.1);
 
   let barY = 15;
-  
-  benchmarks.forEach((item) => {
-    const isUser = item.key === 'user';
+
+  gates.forEach((item) => {
     const itemPct = item.value / maxValue;
-    const computedBarWidth = Math.max(8, itemPct * chartWidth);
+    const computedBarWidth = Math.max(5, itemPct * chartWidth);
+
+    // Color code based on wait time status
+    let barColor = STATUS_COLORS.success;
+    if (item.value > 25) {
+      barColor = STATUS_COLORS.danger;
+    } else if (item.value > 10) {
+      barColor = STATUS_COLORS.accent;
+    }
 
     const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    
-    // Label text
+
+    // Label Text
     const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
     label.setAttribute('x', String(chartX - 10));
     label.setAttribute('y', String(barY + 16));
     label.setAttribute('text-anchor', 'end');
-    label.setAttribute('fill', isUser ? 'var(--text-primary)' : 'var(--text-secondary)');
+    label.setAttribute('fill', 'var(--text-secondary)');
     label.setAttribute('font-family', 'var(--font-body)');
     label.setAttribute('font-size', '11px');
-    label.setAttribute('font-weight', isUser ? '700' : '500');
+    label.setAttribute('font-weight', '600');
     label.textContent = item.label;
 
-    // Bar background tracking
+    // Bar Background Track
     const track = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     track.setAttribute('x', String(chartX));
     track.setAttribute('y', String(barY));
@@ -233,28 +247,24 @@ export function renderBenchmarkChart(containerId, userTotal) {
     track.setAttribute('rx', '4');
     track.setAttribute('fill', 'var(--bg-surface-elevated)');
 
-    // Filled bar representation
+    // Filled Bar
     const fillBar = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     fillBar.setAttribute('x', String(chartX));
     fillBar.setAttribute('y', String(barY));
-    fillBar.setAttribute('width', '0'); // Animate from 0 width
+    fillBar.setAttribute('width', '0'); // Animate
     fillBar.setAttribute('height', '22');
     fillBar.setAttribute('rx', '4');
-    fillBar.setAttribute('fill', item.color);
-    if (isUser) {
-      fillBar.setAttribute('stroke', 'var(--text-primary)');
-      fillBar.setAttribute('stroke-width', '1');
-    }
+    fillBar.setAttribute('fill', barColor);
 
-    // Value text
+    // Value Text
     const valText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
     valText.setAttribute('x', String(chartX + computedBarWidth + 8));
     valText.setAttribute('y', String(barY + 15));
-    valText.setAttribute('fill', isUser ? 'var(--accent)' : 'var(--text-muted)');
+    valText.setAttribute('fill', item.value > 25 ? 'var(--danger)' : item.value > 10 ? 'var(--accent)' : 'var(--text-muted)');
     valText.setAttribute('font-family', 'var(--font-display)');
     valText.setAttribute('font-size', '11px');
     valText.setAttribute('font-weight', '700');
-    valText.textContent = `${item.value.toFixed(1)} t`;
+    valText.textContent = `${item.value} min`;
 
     group.appendChild(label);
     group.appendChild(track);
@@ -262,7 +272,7 @@ export function renderBenchmarkChart(containerId, userTotal) {
     group.appendChild(valText);
     svg.appendChild(group);
 
-    // Dynamic width rendering animation
+    // Animation
     setTimeout(() => {
       fillBar.setAttribute('width', String(computedBarWidth));
       fillBar.style.transition = 'width 0.8s cubic-bezier(0.16, 1, 0.3, 1)';

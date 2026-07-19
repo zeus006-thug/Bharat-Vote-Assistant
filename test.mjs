@@ -1,104 +1,86 @@
-import { calculateFootprint, benchmarkFootprint } from './calculator.js';
+import { verifyTicket, generateTicketSignature, estimateTransit, calculateGateQueue, calculateXP } from './operations.js';
 import { getCoachResponse, getDashboardInsights } from './assistant.js';
 import assert from 'assert';
 
-console.log("=== EcoPulse Carbon Calculator Unit Tests ===");
+console.log("=== ArenaPulse AI Operations Unit Tests ===");
 
 try {
-  // Test case 1: Standard profile (representing typical mixed-diet commuter)
-  const standardInput = {
-    carType: 'gasolineCar',
-    carMiles: 10000,
-    transitMiles: 2000,
-    flightsShort: 3,
-    flightsMedium: 1,
-    flightsLong: 0,
-    electricityBill: 120,
-    electricityRenewable: 0,
-    gasBill: 50,
-    dietType: 'averageMeat',
-    foodWaste: 'medium',
-    shoppingHabits: 'moderate',
-    recycleItems: ['paper', 'plastic']
+  // Test Case 1: Cryptographic Ticket Verification
+  const validTicketData = {
+    ticketId: 'WC2026-NYNJ-84920',
+    matchNumber: 'Match 10',
+    holderName: 'Jane Doe',
+    sector: 'North Stand',
+    gate: 'Gate A',
+    seat: 'Row 12, Seat 4'
   };
 
-  const standardResult = calculateFootprint(standardInput);
-  console.log("✅ Standard Profile Total footprint:", standardResult.total, "tCO2e");
-  
-  // Validate that transport math matches expected constants:
-  // Car: 10000 * 0.404 = 4040 kg
-  // Transit: 2000 * 0.089 = 178 kg
-  // Flights: (3 * 500 * 0.225) + (1 * 2000 * 0.15) = 337.5 + 300 = 637.5 kg
-  // Total Transport: 4855.5 kg = 4.8555 tons. Rounded to 1 decimal place: 4.9.
-  assert.strictEqual(standardResult.breakdown.transport, 4.9);
-  console.log("✅ Transport breakdown matches expected formula: 4.9 tons");
+  const signature = generateTicketSignature(validTicketData);
+  assert.strictEqual(signature.length, 8, "Signature length should be 8 characters.");
 
-  // Test case 2: Eco-friendly low-impact profile
-  const greenInput = {
-    carType: 'electricCar',
-    carMiles: 2000,
-    transitMiles: 5000,
-    flightsShort: 0,
-    flightsMedium: 0,
-    flightsLong: 0,
-    electricityBill: 50,
-    electricityRenewable: 100, // 100% solar/green power
-    gasBill: 0, // No gas heating
-    dietType: 'vegan',
-    foodWaste: 'low',
-    shoppingHabits: 'minimalist',
-    recycleItems: ['paper', 'plastic', 'glass', 'metal']
+  const verifySuccess = verifyTicket({ ...validTicketData, signature });
+  assert.strictEqual(verifySuccess.isValid, true, "Valid signature check failed.");
+  console.log("✅ Valid ticket signature verified successfully.");
+
+  // Test Case 2: Counterfeit Ticket Check
+  const verifyFailSig = verifyTicket({ ...validTicketData, signature: 'BADHASH1' });
+  assert.strictEqual(verifyFailSig.isValid, false, "Counterfeit signature should be caught.");
+  console.log("✅ Counterfeit signature successfully blocked.");
+
+  // Test Case 3: Invalid Ticket ID Format Check
+  const invalidTicketData = {
+    ticketId: 'WC2026-INVALIDFORMAT-1234',
+    matchNumber: 'Match 10',
+    holderName: 'Jane Doe',
+    sector: 'North Stand',
+    gate: 'Gate A',
+    seat: 'Row 12, Seat 4',
+    signature
   };
+  const verifyFailFormat = verifyTicket(invalidTicketData);
+  assert.strictEqual(verifyFailFormat.isValid, false, "Invalid ID format should be caught.");
+  console.log("✅ Invalid Ticket ID formats blocked by regex.");
 
-  const greenResult = calculateFootprint(greenInput);
-  console.log("✅ Green Profile Total footprint:", greenResult.total, "tCO2e");
-  assert.ok(greenResult.total < 3.0, "Eco-friendly footprint should be small (<3 tons)");
-  
-  // Test case 3: Benchmark testing
-  const lowBenchmark = benchmarkFootprint(1.8);
-  assert.strictEqual(lowBenchmark.rating, 'Climate Hero');
-  assert.strictEqual(lowBenchmark.badgeColor, 'success');
-  console.log("✅ Low Footprint benchmark rating matches: Climate Hero");
+  // Test Case 4: Transit Estimator Logic
+  // Train Transit (Speed 25mph, Factor 0.089kg/mi). Solo Gas driving is 0.404kg/mi.
+  // 12 miles with moderate congestion (Multiplier 1.3):
+  // Travel Speed: 25 / 1.3 = 19.23 mph
+  // Travel Time: (12 / 19.23) * 60 = 37.4 mins (rounds to 37)
+  // Carbon: 12 * 0.089 = 1.068 kg CO2 (rounds to 1.1)
+  // Savings: (12 * 0.404) - 1.068 = 4.848 - 1.068 = 3.78 kg CO2 (rounds to 3.8)
+  const transitEst = estimateTransit('transit', 12, 'moderate');
+  assert.strictEqual(transitEst.travelTimeMinutes, 37, "Transit travel time calculation mismatch.");
+  assert.strictEqual(transitEst.carbonKg, 1.1, "Transit carbon emissions calculation mismatch.");
+  assert.strictEqual(transitEst.carbonSavedKg, 3.8, "Transit carbon offsets savings mismatch.");
+  console.log("✅ Transit time & carbon savings formulas validated successfully.");
 
-  const highBenchmark = benchmarkFootprint(12.5);
-  assert.strictEqual(highBenchmark.rating, 'High Impact');
-  assert.strictEqual(highBenchmark.badgeColor, 'danger');
-  console.log("✅ High Footprint benchmark rating matches: High Impact");
+  // Test Case 5: Gate Queue wait estimations
+  // Gate B has 220 people. Moderate congestion wait multiplier per person is 0.12 min.
+  // Wait: 220 * 0.12 = 26.4 mins (rounds to 26). Wait is > 25, so status is 'danger'.
+  const queueEst = calculateGateQueue('Gate B', 220, 'moderate');
+  assert.strictEqual(queueEst.estimatedWaitMinutes, 26);
+  assert.strictEqual(queueEst.statusColor, 'danger', "High wait queues should render a danger state.");
+  console.log("✅ Checkpoint wait-time and safety status level calculations validated.");
 
-  // Test case 4: Assistant getCoachResponse test
-  const coachWelcome = getCoachResponse('hello', { footprint: { total: 0 } });
-  assert.ok(coachWelcome.reply.includes("Eco"), "Coach response should mention Eco");
-  assert.ok(coachWelcome.chips.length > 0, "Coach should return suggestion chips");
-  console.log("✅ Coach greeting response validated");
+  // Test Case 6: XP Calculations
+  // 2 commitments (10 XP each) and 1 completed action (40 XP each) = 60 XP
+  const xpCount = calculateXP(['act-1', 'act-2'], ['act-3']);
+  assert.strictEqual(xpCount, 60, "XP tallying formula mismatch.");
+  console.log("✅ Sustainability and Volunteer XP calculations validated.");
 
-  const coachEmitter = getCoachResponse('highest emitter', {
-    footprint: { total: 10, breakdown: { transport: 6, energy: 2, food: 1, consumption: 1 } }
-  });
-  assert.ok(coachEmitter.reply.toLowerCase().includes("transport"), "Highest emitter response should identify transport");
-  console.log("✅ Coach emitter analysis validated");
+  // Test Case 7: Assistant offline chatbot router check
+  const coachWelcome = await getCoachResponse('hello', { role: 'fan' });
+  assert.ok(coachWelcome.reply.includes("Aegis"), "Fallback response should identify assistant Aegis.");
+  assert.ok(coachWelcome.chips.length > 0, "Response should return quick suggestion chips.");
+  assert.strictEqual(coachWelcome.isMock, true, "Without key, response must be marked as mock/simulated.");
+  console.log("✅ Chatbot offline rule-matching routing verified.");
 
-  // Test case 5: Assistant getDashboardInsights test
-  const emptyInsights = getDashboardInsights({ total: 0 });
-  assert.strictEqual(emptyInsights[0].type, 'info');
-  assert.ok(emptyInsights[0].title.includes("Incomplete"), "Empty profile should prompt for calculations");
-  console.log("✅ Empty footprint insights validated");
+  // Test Case 8: Dashboard Insights alerts
+  const emptyInsights = getDashboardInsights({ role: 'fan', ticketInfo: { verified: false } });
+  assert.strictEqual(emptyInsights[0].type, 'critical', "Unverified ticket should trigger critical action warning.");
+  console.log("✅ Dynamic contextual alert notifications validated.");
 
-  const highEnergyInsights = getDashboardInsights({
-    total: 12,
-    breakdown: { transport: 1, energy: 6, food: 1, consumption: 4 }
-  });
-  const energyCrit = highEnergyInsights.find(i => i.title === "Energy Draw Detected");
-  assert.ok(energyCrit, "Should produce energy alert insight");
-  assert.strictEqual(energyCrit.type, "critical");
-  console.log("✅ High energy consumption insights validated");
-
-  // Test case 6: Math Engine Default Fallback test
-  const fallbackResult = calculateFootprint({});
-  assert.strictEqual(typeof fallbackResult.total, 'number');
-  assert.ok(fallbackResult.total > 0, "Fallback calculation should use defaults and return positive footprint");
-  console.log("✅ Default calculation fallbacks validated");
-
-  console.log("\n🎉 ALL TESTS PASSED SUCCESSFULLY! Math and assistant logic validated.");
+  console.log("\n🎉 ALL 8 TEST CASES PASSED SUCCESSFULLY! Code quality and operations logic validated.");
 } catch (error) {
   console.error("❌ Test Validation Failed:", error.message);
   process.exit(1);

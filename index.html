@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EcoPulse - Carbon Footprint Tracker & Coach</title>
+  <title>ArenaPulse AI - FIFA World Cup 2026 Smart Stadium Platform</title>
   
-  <!-- High Security Content Security Policy (CSP) -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:;">
+  <!-- Content Security Policy: Allows Gemini SDK and API endpoints securely -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://esm.run https://*.esm.run https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://*; connect-src 'self' https://generativelanguage.googleapis.com;">
   
   <link rel="stylesheet" href="index.css">
   <!-- PWA Manifest -->
@@ -14,451 +14,296 @@
 </head>
 <body>
 
-  <!-- --- ACCESSIBILITY SKIP LINK --- -->
-  <a href="#main-content" style="position: absolute; left: -9999px; top: 0; background: var(--primary); color: var(--text-on-primary); padding: 0.5rem 1rem; z-index: 1000;" onfocus="this.style.left='0px';" onblur="this.style.left='-9999px';">Skip to Content</a>
+  <!-- Accessibility Skip Link -->
+  <a href="#main-content" class="skip-link" onfocus="this.style.left='0px';" onblur="this.style.left='-9999px';">Skip to Content</a>
 
-  <!-- --- HEADER & NAVIGATION --- -->
+  <!-- Header & Navigation -->
   <header>
     <div class="nav-container">
-      <a href="#" class="logo" aria-label="EcoPulse Home">
-        <div class="logo-icon" aria-hidden="true">E</div>
-        EcoPulse
+      <a href="#" class="logo" aria-label="ArenaPulse Home">
+        <div class="logo-icon" aria-hidden="true">⚽</div>
+        <span>ArenaPulse <span style="font-weight: 300; font-size: 0.85em; opacity: 0.8;">AI</span></span>
       </a>
       
       <nav aria-label="Main navigation menu">
         <ul class="nav-menu">
           <li><button class="nav-link active" data-view="dashboard" id="nav-btn-dashboard" type="button">Dashboard</button></li>
-          <li><button class="nav-link" data-view="calculator" id="nav-btn-calculator" type="button">Calculator</button></li>
-          <li><button class="nav-link" data-view="coach" id="nav-btn-coach" type="button">Smart Coach</button></li>
-          <li><button class="nav-link" data-view="planner" id="nav-btn-planner" type="button">Action Planner</button></li>
-          <li><button class="nav-link" data-view="rewards" id="nav-btn-rewards" type="button">Badges</button></li>
+          <li><button class="nav-link" data-view="map" id="nav-btn-map" type="button">Stadium Map</button></li>
+          <li><button class="nav-link" data-view="coach" id="nav-btn-coach" type="button">Aegis Chat</button></li>
+          <li><button class="nav-link" data-view="planner" id="nav-btn-planner" type="button">Action Tracker</button></li>
+          <li><button class="nav-link" data-view="verifier" id="nav-btn-verifier" type="button">Ticket Verifier</button></li>
         </ul>
       </nav>
 
-      <!-- Biome selector & Points system display -->
-      <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-        <div style="display: flex; gap: 0.5rem; align-items: center;">
-          <label for="biome-theme-select" style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600;">Biome:</label>
-          <select id="biome-theme-select" class="select-control" style="padding: 0.3rem 0.6rem; font-size: 0.8rem; width: auto; background: var(--bg-surface-elevated); margin: 0; cursor: pointer; border-color: var(--border-color);" aria-label="Select color theme biome">
-            <option value="forest">🌲 Forest</option>
-            <option value="ocean">🌊 Ocean</option>
-            <option value="geothermal">🌋 Geothermal</option>
+      <!-- Role Switcher, Settings, and XP System -->
+      <div class="header-controls">
+        <div class="role-selector">
+          <label for="role-theme-select">Role:</label>
+          <select id="role-theme-select" class="select-control" aria-label="Select user role">
+            <option value="fan">🎫 Fan</option>
+            <option value="staff">🛡️ Volunteer / Staff</option>
+            <option value="organizer">📊 Organizer</option>
           </select>
         </div>
-        <div class="badge" aria-label="Your experience points total" style="background: hsla(142, 72%, 40%, 0.15); border-color: var(--border-active); color: var(--text-primary); font-family: var(--font-display); height: fit-content; margin: 0;">
+        
+        <div class="xp-badge" aria-label="Your experience points total">
           ✨ <span id="user-points-val">0</span> XP
         </div>
+        
+        <button id="btn-settings-open" class="btn btn-icon" type="button" aria-label="Open Settings" title="Gemini API Key Settings">⚙️</button>
       </div>
     </div>
   </header>
 
-  <!-- --- MAIN CONTENT --- -->
+  <!-- Main Content Area -->
   <main id="main-content">
 
-    <!-- ================= DASHBOARD VIEW ================= -->
+    <!-- ================= 1. DASHBOARD VIEW ================= -->
     <section id="dashboard-view" class="view-panel active" aria-labelledby="dash-title">
-      <h2 id="dash-title" style="margin-bottom: 2rem; font-size: 2.2rem; display: flex; align-items: center; gap: 0.5rem;">
-        <span>🌱</span> Personal Carbon Intelligence
-      </h2>
+      <div class="dashboard-header">
+        <h2 id="dash-title">⚽ Stadium Intelligence</h2>
+        <span class="badge badge-success" style="font-size: 0.9rem;" id="match-day-badge">Live: Match 10 - USA vs England</span>
+      </div>
       
-      <div class="dash-grid">
-        <!-- 1. Carbon Score Card -->
+      <!-- Fan Dashboard Layout -->
+      <div id="fan-dash-layout" class="dash-grid role-dash">
+        <!-- Ticket & Transit Card -->
         <div class="card metric-card">
-          <h3 class="card-title" style="font-size: 1.1rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 1rem; justify-content: space-between; overflow: visible;">
-            <span>Net Carbon Footprint</span>
-            <div class="tooltip-container">
-              <button class="info-trigger" type="button" aria-label="View calculation formulas" aria-haspopup="true">ℹ️</button>
-              <div class="tooltip-box">
-                <strong>Carbon Math Formulas:</strong><br>
-                • <strong>Transport:</strong> (Car miles × fuel factor) + (Transit miles × 0.089) + (Flights × haul factor).<br>
-                • <strong>Energy:</strong> ((Electric bill / $0.16) × 12 × (1 - Renewable%) × 0.371) + ((Gas bill / $1.20) × 12 × 5.306).<br>
-                • <strong>Diet:</strong> Base diet factor (Meat vs Vegan) × Food waste factor.<br>
-                • <strong>Shopping:</strong> Baseline shopping footprint - recycling offsets.
-              </div>
-            </div>
-          </h3>
-          <div class="metric-val" id="score-numeric-val">--</div>
-          <div class="metric-unit">Metric Tons CO2e / Year</div>
-          <span class="badge" id="score-classification-badge" aria-live="polite">No Data</span>
-          <p id="benchmarking-details-desc" style="font-size: 0.85rem; margin-top: 1.5rem; color: var(--text-secondary); text-align: left;"></p>
-        </div>
-
-        <!-- 2. Source Breakdown Chart (Donut) -->
-        <div class="card card-wide" style="display: flex; flex-direction: column;">
-          <h3 class="card-title">📉 Footprint Category Breakdown</h3>
-          <div class="chart-container" id="donut-chart-target" aria-label="Carbon emission categories donut chart">
-            <div style="color: var(--text-muted); font-size: 0.95rem; text-align: center;">
-              No data collected. Navigate to the <strong>Calculator</strong> tab to determine your profile!
-            </div>
+          <h3 class="card-title">🎫 Match Day Ticket</h3>
+          <div id="fan-ticket-summary" style="margin-bottom: 1.5rem;">
+            <p style="color: var(--text-muted);">No verified ticket found. Please authentic your entry ticket in the verifier tab.</p>
           </div>
-        </div>
-
-        <!-- 3. Comparison Benchmark Chart (Bar) -->
-        <div class="card" style="display: flex; flex-direction: column;">
-          <h3 class="card-title">⚖️ Carbon Benchmarks</h3>
-          <div class="chart-container" id="benchmark-chart-target" aria-label="Carbon footprint vs global averages comparison bar chart">
-            <div style="color: var(--text-muted); font-size: 0.95rem; text-align: center;">
-              Complete the calculator step to compare your emissions.
-            </div>
-          </div>
-        </div>
-
-        <!-- 4. Top Commitments Summary -->
-        <div class="card card-wide" style="display: flex; flex-direction: column;">
-          <h3 class="card-title" style="justify-content: space-between;">
-            <span>📋 Active Eco Commitments</span>
-            <span class="badge" style="background: var(--primary-glow); border-color: var(--primary); color: var(--text-primary);"><span id="committed-actions-count">0</span> Active</span>
-          </h3>
-          <ul id="commitments-list-items" style="display: flex; flex-direction: column; gap: 0.75rem; padding: 0;">
-            <li style="color: var(--text-muted); font-size: 0.9rem; list-style: none;">No current active commitments. Browse the Action Planner!</li>
-          </ul>
-        </div>
-
-        <!-- Carbon Reduction Simulator -->
-        <div class="card card-wide" style="display: flex; flex-direction: column;" id="simulator-card-panel">
-          <h3 class="card-title" style="justify-content: space-between;">
-            <span>🎮 Scenario Simulator</span>
-            <div class="tooltip-container">
-              <button class="info-trigger" type="button" aria-label="View simulator formula" aria-haspopup="true">ℹ️</button>
-              <div class="tooltip-box">
-                <strong>Simulator Adjustments:</strong><br>
-                Simulates a hypothetical reduction by scaling down transport mileage and energy draw, and reducing food footprint relative to meatless days.
-              </div>
-            </div>
-          </h3>
-          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;">Adjust parameters to model immediate green changes before updating your profile.</p>
           
-          <div class="form-group" style="margin-bottom: 1rem;">
-            <label for="sim-transport" class="form-label" style="font-size: 0.85rem;">Commute Mileage Reduction (%)</label>
-            <div class="range-container">
-              <input type="range" class="range-control" id="sim-transport" min="0" max="100" step="5" value="0">
-              <span class="range-val" id="sim-transport-val">0</span>
-              <span style="font-size: 0.8rem; color: var(--text-muted);">%</span>
+          <div style="border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+            <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem;">🚗 Commute Planner</h4>
+            <div class="form-group" style="margin-bottom: 1rem;">
+              <label for="commute-transit-method" class="form-label" style="font-size: 0.8rem;">Travel Mode</label>
+              <select id="commute-transit-method" class="select-control">
+                <option value="transit">🚆 Train / Rail Connection</option>
+                <option value="rideShare">🚙 Shared Electric Vehicle</option>
+                <option value="car">🚗 Solo Driving (Gasoline)</option>
+                <option value="walk">🚶 Walk / Bicycle</option>
+              </select>
             </div>
-          </div>
-
-          <div class="form-group" style="margin-bottom: 1rem;">
-            <label for="sim-energy" class="form-label" style="font-size: 0.85rem;">Green Utility Switch Share (%)</label>
-            <div class="range-container">
-              <input type="range" class="range-control" id="sim-energy" min="0" max="100" step="5" value="0">
-              <span class="range-val" id="sim-energy-val">0</span>
-              <span style="font-size: 0.8rem; color: var(--text-muted);">%</span>
-            </div>
-          </div>
-
-          <div class="form-group" style="margin-bottom: 1.25rem;">
-            <label for="sim-diet" class="form-label" style="font-size: 0.85rem;">Weekly Vegetarian Shift (Days)</label>
-            <div class="range-container">
-              <input type="range" class="range-control" id="sim-diet" min="0" max="7" step="1" value="0">
-              <span class="range-val" id="sim-diet-val">0</span>
-              <span style="font-size: 0.8rem; color: var(--text-muted);">days</span>
-            </div>
-          </div>
-
-          <div style="margin-top: auto; padding-top: 1rem; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary);">Simulated Footprint:</span>
-            <span style="font-family: var(--font-display); font-weight: 800; color: var(--accent); font-size: 1.4rem;" id="sim-footprint-result">--</span>
-          </div>
-        </div>
-
-        <!-- Data Privacy & Backup -->
-        <div class="card" style="display: flex; flex-direction: column;">
-          <h3 class="card-title">🔒 Data Sovereignty</h3>
-          <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem;">Export your locally cached profile data to a JSON backup, or restore calculations instantly.</p>
-          
-          <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: auto;">
-            <button class="btn btn-secondary" id="btn-export-profile" type="button" style="padding: 0.6rem;">💾 Export Profile</button>
-            <button class="btn btn-secondary" id="btn-import-trigger" type="button" style="padding: 0.6rem;">📂 Import Profile</button>
-            <input type="file" id="file-import-profile" accept=".json" style="display: none;" aria-hidden="true">
-          </div>
-        </div>
-
-        <!-- 5. Coach Insights -->
-        <div class="card card-full" style="display: flex; flex-direction: column;">
-          <h3 class="card-title">💡 Personalized Coach Recommendations</h3>
-          <div class="coaching-insights" id="coach-insights-target">
-            <div class="insight-item">
-              <div class="insight-text">
-                <div class="insight-header">Carbon Calculator Pending</div>
-                To receive tailored sustainability advice, please complete your profiling calculations.
+            <div class="form-group">
+              <label for="commute-distance" class="form-label" style="font-size: 0.8rem;">Distance to Stadium (Miles)</label>
+              <div class="range-container">
+                <input type="range" class="range-control" id="commute-distance" min="1" max="50" step="1" value="12">
+                <span class="range-val" id="commute-distance-val">12</span>
+                <span style="font-size: 0.8rem; color: var(--text-muted);">mi</span>
               </div>
             </div>
+            
+            <div class="transit-results-box" style="margin-top: 1.25rem; font-size: 0.85rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+              <div class="card" style="padding: 0.75rem; background: var(--bg-surface-elevated); margin:0;">
+                <span style="color:var(--text-secondary); display:block; font-size:0.75rem;">Estimated Time</span>
+                <strong id="transit-calc-time" style="font-size:1.1rem; color:var(--accent);">-- mins</strong>
+              </div>
+              <div class="card" style="padding: 0.75rem; background: var(--bg-surface-elevated); margin:0;">
+                <span style="color:var(--text-secondary); display:block; font-size:0.75rem;">Carbon Offsets</span>
+                <strong id="transit-calc-savings" style="font-size:1.1rem; color:var(--success);">-- kg CO2</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Seating & Gate Congestion -->
+        <div class="card card-wide" style="display: flex; flex-direction: column;">
+          <h3 class="card-title">📉 Stadium Queue & Congestion</h3>
+          <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.25rem;">Live queue times at stadium entry checkpoints. Green gates indicate smooth traffic flow.</p>
+          <div class="chart-container" id="fan-queue-chart-target" style="flex-grow: 1;">
+            <!-- Programmatic SVG chart here -->
           </div>
         </div>
       </div>
-    </section>
 
-    <!-- ================= CALCULATOR VIEW ================= -->
-    <section id="calculator-view" class="view-panel" aria-labelledby="calc-title">
-      <div class="calc-container">
-        <!-- Wizard Form -->
-        <div class="card calc-wizard">
-          <div class="progress-track" aria-label="Wizard progress track">
-            <div class="progress-bar" id="wizard-progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-          </div>
-
-          <form id="footprint-wizard-form" onsubmit="return false;">
-            <!-- Step 1: Transport -->
-            <div class="calc-step active" data-step="1">
-              <h3 class="step-title">Transportation Commuting</h3>
-              <p class="step-desc">Help us estimate your emissions from transit and air travel.</p>
-              
-              <div class="form-group">
-                <span class="form-label">Primary Daily Commute Method</span>
-                <div class="radio-grid" role="radiogroup" aria-label="Commute vehicle type options">
-                  <label class="radio-card selected">
-                    <input type="radio" name="carType" value="gasolineCar" checked>
-                    <span class="radio-icon" aria-hidden="true">🚗</span>
-                    <span class="radio-label">Gasoline Car</span>
-                  </label>
-                  <label class="radio-card">
-                    <input type="radio" name="carType" value="electricCar">
-                    <span class="radio-icon" aria-hidden="true">🔋</span>
-                    <span class="radio-label">Electric Vehicle</span>
-                  </label>
-                  <label class="radio-card">
-                    <input type="radio" name="carType" value="hybridCar">
-                    <span class="radio-icon" aria-hidden="true">🔌</span>
-                    <span class="radio-label">Hybrid Car</span>
-                  </label>
-                  <label class="radio-card">
-                    <input type="radio" name="carType" value="motorbike">
-                    <span class="radio-icon" aria-hidden="true">🏍️</span>
-                    <span class="radio-label">Motorbike</span>
-                  </label>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="carMiles" class="form-label">Annual Commuting Mileage (Car/Motorbike)</label>
-                <div class="range-container">
-                  <input type="range" class="range-control" id="carMiles" min="0" max="30000" step="500" value="8000">
-                  <span class="range-val" id="carMiles-val">8000</span>
-                  <span style="font-size: 0.9rem; color: var(--text-muted);">mi</span>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="transitMiles" class="form-label">Annual Public Transit Mileage (Bus/Train)</label>
-                <div class="range-container">
-                  <input type="range" class="range-control" id="transitMiles" min="0" max="15000" step="250" value="1000">
-                  <span class="range-val" id="transitMiles-val">1000</span>
-                  <span style="font-size: 0.9rem; color: var(--text-muted);">mi</span>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <span class="form-label">Annual Round-Trip Flights</span>
-                <div style="display: flex; gap: 1rem;">
-                  <div style="flex: 1;">
-                    <label for="flightsShort" style="font-size: 0.8rem; color: var(--text-muted);">Short (&lt; 2h)</label>
-                    <input type="number" id="flightsShort" class="input-control" min="0" max="100" value="2">
-                  </div>
-                  <div style="flex: 1;">
-                    <label for="flightsMedium" style="font-size: 0.8rem; color: var(--text-muted);">Medium (2-6h)</label>
-                    <input type="number" id="flightsMedium" class="input-control" min="0" max="50" value="1">
-                  </div>
-                  <div style="flex: 1;">
-                    <label for="flightsLong" style="font-size: 0.8rem; color: var(--text-muted);">Long (&gt; 6h)</label>
-                    <input type="number" id="flightsLong" class="input-control" min="0" max="20" value="0">
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Step 2: Energy -->
-            <div class="calc-step" data-step="2">
-              <h3 class="step-title">Household Energy</h3>
-              <p class="step-desc">Measure how electricity and gas usage translates to emissions.</p>
-              
-              <div class="form-group">
-                <label for="electricityBill" class="form-label">Average Monthly Electricity Bill ($)</label>
-                <div class="range-container">
-                  <input type="range" class="range-control" id="electricityBill" min="0" max="500" step="10" value="100">
-                  <span class="range-val" id="electricityBill-val">100</span>
-                  <span style="font-size: 0.9rem; color: var(--text-muted);">$</span>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label for="electricityRenewable" class="form-label">Renewable Grid Energy Share (%)</label>
-                <div class="range-container">
-                  <input type="range" class="range-control" id="electricityRenewable" min="0" max="100" step="5" value="0">
-                  <span class="range-val" id="electricityRenewable-val">0</span>
-                  <span style="font-size: 0.9rem; color: var(--text-muted);">%</span>
-                </div>
-                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">Select if you pay for green power tariffs or have solar panels installed.</p>
-              </div>
-
-              <div class="form-group">
-                <label for="gasBill" class="form-label">Average Monthly Natural Gas Bill ($)</label>
-                <div class="range-container">
-                  <input type="range" class="range-control" id="gasBill" min="0" max="300" step="10" value="40">
-                  <span class="range-val" id="gasBill-val">40</span>
-                  <span style="font-size: 0.9rem; color: var(--text-muted);">$</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Step 3: Diet & Food -->
-            <div class="calc-step" data-step="3">
-              <h3 class="step-title">Diet & Food Habits</h3>
-              <p class="step-desc">Agricultural production represents a substantial carbon footprint category.</p>
-              
-              <div class="form-group">
-                <span class="form-label">Primary Dietary Profile</span>
-                <div class="radio-grid" role="radiogroup" aria-label="Dietary option radio selection">
-                  <label class="radio-card">
-                    <input type="radio" name="dietType" value="heavyMeat">
-                    <span class="radio-icon" aria-hidden="true">🥩</span>
-                    <span class="radio-label">High Meat</span>
-                  </label>
-                  <label class="radio-card selected">
-                    <input type="radio" name="dietType" value="averageMeat" checked>
-                    <span class="radio-icon" aria-hidden="true">🍖</span>
-                    <span class="radio-label">Average Mixed</span>
-                  </label>
-                  <label class="radio-card">
-                    <input type="radio" name="dietType" value="lowMeat">
-                    <span class="radio-icon" aria-hidden="true">🍗</span>
-                    <span class="radio-label">Low Meat</span>
-                  </label>
-                  <label class="radio-card">
-                    <input type="radio" name="dietType" value="vegetarian">
-                    <span class="radio-icon" aria-hidden="true">🍳</span>
-                    <span class="radio-label">Vegetarian</span>
-                  </label>
-                  <label class="radio-card">
-                    <input type="radio" name="dietType" value="vegan">
-                    <span class="radio-icon" aria-hidden="true">🌱</span>
-                    <span class="radio-label">Vegan</span>
-                  </label>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <span class="form-label">Wasted Food Habits</span>
-                <div class="radio-grid" role="radiogroup" aria-label="Wasted food radio selection">
-                  <label class="radio-card">
-                    <input type="radio" name="foodWaste" value="low">
-                    <span class="radio-icon" aria-hidden="true">🥗</span>
-                    <span class="radio-label">Minimal Waste</span>
-                  </label>
-                  <label class="radio-card selected">
-                    <input type="radio" name="foodWaste" value="medium" checked>
-                    <span class="radio-icon" aria-hidden="true">🍽️</span>
-                    <span class="radio-label">Average Waste</span>
-                  </label>
-                  <label class="radio-card">
-                    <input type="radio" name="foodWaste" value="high">
-                    <span class="radio-icon" aria-hidden="true">🗑️</span>
-                    <span class="radio-label">Frequent Waste</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <!-- Step 4: Shopping & Waste -->
-            <div class="calc-step" data-step="4">
-              <h3 class="step-title">Shopping & Recycling</h3>
-              <p class="step-desc">Refine estimations based on shopping choices and waste management.</p>
-              
-              <div class="form-group">
-                <span class="form-label">Annual Buying Frequency (Apparel/Electronics)</span>
-                <div class="radio-grid" role="radiogroup" aria-label="Shopping frequency selection">
-                  <label class="radio-card">
-                    <input type="radio" name="shoppingHabits" value="minimalist">
-                    <span class="radio-icon" aria-hidden="true">📦</span>
-                    <span class="radio-label">Minimalist</span>
-                  </label>
-                  <label class="radio-card selected">
-                    <input type="radio" name="shoppingHabits" value="moderate" checked>
-                    <span class="radio-icon" aria-hidden="true">🛍️</span>
-                    <span class="radio-label">Average Buyer</span>
-                  </label>
-                  <label class="radio-card">
-                    <input type="radio" name="shoppingHabits" value="intensive">
-                    <span class="radio-icon" aria-hidden="true">💎</span>
-                    <span class="radio-label">Heavy Buyer</span>
-                  </label>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <span class="form-label">Recycled Household Materials</span>
-                <div class="radio-grid" role="group" aria-label="Recycled household materials checkboxes">
-                  <label class="radio-card check-card">
-                    <input type="checkbox" name="recycleItems" value="paper">
-                    <span class="radio-icon" aria-hidden="true">📰</span>
-                    <span class="radio-label">Paper</span>
-                  </label>
-                  <label class="radio-card check-card">
-                    <input type="checkbox" name="recycleItems" value="plastic">
-                    <span class="radio-icon" aria-hidden="true">🥤</span>
-                    <span class="radio-label">Plastics</span>
-                  </label>
-                  <label class="radio-card check-card">
-                    <input type="checkbox" name="recycleItems" value="glass">
-                    <span class="radio-icon" aria-hidden="true">🍾</span>
-                    <span class="radio-label">Glass</span>
-                  </label>
-                  <label class="radio-card check-card">
-                    <input type="checkbox" name="recycleItems" value="metal">
-                    <span class="radio-icon" aria-hidden="true">🥫</span>
-                    <span class="radio-label">Metal Cans</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <!-- Wizard controls -->
-            <div class="calc-nav">
-              <button class="btn btn-secondary" id="prev-step-btn" type="button" disabled>Back</button>
-              <button class="btn btn-secondary" id="next-step-btn" type="button">Continue</button>
-            </div>
-          </form>
+      <!-- Staff/Volunteer Dashboard Layout -->
+      <div id="staff-dash-layout" class="dash-grid role-dash" style="display: none;">
+        <!-- Checklist tasks card -->
+        <div class="card card-wide">
+          <h3 class="card-title" style="justify-content: space-between;">
+            <span>🛡️ Volunteer Routine Patrols</span>
+            <span class="badge" style="background: var(--primary-glow); border-color: var(--primary); color: var(--text-primary);"><span id="staff-tasks-count">0</span> Active</span>
+          </h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Complete regular stadium sector inspections. Earn XP for keeping fans safe.</p>
+          <ul id="staff-tasks-list" style="display: flex; flex-direction: column; gap: 0.75rem; padding: 0;">
+            <!-- Volunteer tasks list injected programmatically -->
+          </ul>
         </div>
 
-        <!-- Calculator side information panel -->
-        <div class="calc-sidebar">
-          <div class="card" style="background: radial-gradient(circle at top left, hsla(45, 100%, 10%, 0.15), transparent);">
-            <h3 class="card-title">💡 Why track?</h3>
-            <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1rem;">
-              Understanding your personal ecological footprint allows you to make informed transitions. Small adjustments, like changing lightbulbs or dietary shifts, yield major greenhouse gas cuts when adopted collectively.
-            </p>
-            <h4 style="margin-bottom: 0.5rem; font-size: 1rem; color: var(--text-primary);">Core Math Benchmarks:</h4>
-            <ul style="padding-left: 1.25rem; font-size: 0.85rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 0.5rem;">
-              <li><strong>Transport:</strong> Car fuel variables represent average engine combustion intensities per mile driven.</li>
-              <li><strong>Electricity:</strong> Modeled using regional grid metrics representing generation sources.</li>
-              <li><strong>Diet:</strong> Derived using land-clearing and agricultural chemical emissions statistics.</li>
+        <!-- Incident Reporter Card -->
+        <div class="card">
+          <h3 class="card-title">🚨 Operations Incident Reporter</h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.25rem;">Instantly log spills, safety hazards, ticket blockages, or medical incidents.</p>
+          <form id="incident-report-form" onsubmit="return false;" style="display:flex; flex-direction:column; gap:1rem;">
+            <div class="form-group">
+              <label for="incident-type" class="form-label" style="font-size: 0.8rem;">Incident Category</label>
+              <select id="incident-type" class="select-control" required>
+                <option value="spill">🧹 Spill / Facility Cleaning</option>
+                <option value="crowd">🚧 Crowd / Gate Bottleneck</option>
+                <option value="dispute">🎟️ Ticket Scan Dispute</option>
+                <option value="medical">❤️ Medical Emergency Assist</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="incident-sector" class="form-label" style="font-size: 0.8rem;">Sector / Location</label>
+              <select id="incident-sector" class="select-control" required>
+                <option value="north">North Stand (Sector A)</option>
+                <option value="east">East Stand (Sector B)</option>
+                <option value="south">South Stand (Sector C)</option>
+                <option value="west">West Stand (Sector D)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="incident-notes" class="form-label" style="font-size: 0.8rem;">Incident Summary</label>
+              <input type="text" id="incident-notes" class="input-control" placeholder="Describe the hazard (e.g., Soda spill on stairs)..." required>
+            </div>
+            <button class="btn btn-primary" type="submit" style="padding: 0.6rem;">📢 Log Incident</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Venue Organizer Dashboard Layout -->
+      <div id="organizer-dash-layout" class="dash-grid role-dash" style="display: none;">
+        <!-- Gate Queue Analytics -->
+        <div class="card" style="display: flex; flex-direction: column;">
+          <h3 class="card-title">⏱️ Checkpoint Wait Times</h3>
+          <div class="chart-container" id="org-wait-chart-target" style="height: 180px;"></div>
+        </div>
+
+        <!-- Sector Occupancy Analytics -->
+        <div class="card" style="display: flex; flex-direction: column;">
+          <h3 class="card-title">💺 Sector Crowd Densities</h3>
+          <div class="chart-container" id="org-density-chart-target" style="height: 180px;"></div>
+        </div>
+
+        <!-- Active Incidents Feed -->
+        <div class="card card-wide" style="display: flex; flex-direction: column;">
+          <h3 class="card-title" style="justify-content: space-between;">
+            <span>🚨 Active Operations Log</span>
+            <span class="badge badge-danger" id="unresolved-incident-badge">0 Open Alerts</span>
+          </h3>
+          <div class="incident-feed-container" style="flex-grow: 1; max-height: 200px; overflow-y: auto; padding-right: 0.5rem;">
+            <ul id="organizer-incidents-list" style="display: flex; flex-direction: column; gap: 0.75rem; padding: 0;">
+              <!-- Live incidents list -->
             </ul>
           </div>
         </div>
       </div>
+
+      <!-- Operational Insights Summary (All roles see contextual alerts) -->
+      <div class="card card-full" style="margin-top: 2rem; display: flex; flex-direction: column;">
+        <h3 class="card-title">💡 Operational Intelligence Alert Feed</h3>
+        <div class="coaching-insights" id="ops-insights-target">
+          <!-- Injected programmatically based on state changes -->
+        </div>
+      </div>
     </section>
 
-    <!-- ================= SMART COACH (ASSISTANT) VIEW ================= -->
+    <!-- ================= 2. STADIUM MAP VIEW ================= -->
+    <section id="map-view" class="view-panel" aria-labelledby="map-title">
+      <h2 id="map-title" style="margin-bottom: 0.5rem;">🧭 Interactive Sector Map</h2>
+      <p style="color: var(--text-muted); margin-bottom: 2rem;">Click sectors inside the stadium layout to inspect crowd density, concession stands, and nearest accessibility routes.</p>
+      
+      <div class="calc-container">
+        <!-- SVG Interactive Map -->
+        <div class="card" style="display: flex; align-items: center; justify-content: center; min-height: 400px; background: radial-gradient(circle, var(--bg-surface-elevated) 0%, var(--bg-surface) 100%);">
+          <!-- MetLife Arena representation -->
+          <svg viewBox="0 0 500 500" width="100%" height="400px" style="max-width: 420px; overflow: visible;" id="stadium-interactive-svg" aria-label="Interactive Stadium Map">
+            <!-- Outer Stadium Ring -->
+            <rect x="25" y="25" width="450" height="450" rx="225" fill="none" stroke="var(--border-color)" stroke-width="8"/>
+            
+            <!-- Outer Gates -->
+            <circle cx="250" cy="15" r="14" fill="var(--bg-surface-elevated)" stroke="var(--info)" stroke-width="2" class="map-gate-marker" data-gate="Gate A" style="cursor: pointer;"/>
+            <text x="250" y="5" fill="var(--text-primary)" font-size="10" font-weight="700" text-anchor="middle">Gate A</text>
+            
+            <circle cx="485" cy="250" r="14" fill="var(--bg-surface-elevated)" stroke="var(--accent)" stroke-width="2" class="map-gate-marker" data-gate="Gate B" style="cursor: pointer;"/>
+            <text x="510" y="253" fill="var(--text-primary)" font-size="10" font-weight="700" text-anchor="middle">Gate B</text>
+            
+            <circle cx="250" cy="485" r="14" fill="var(--bg-surface-elevated)" stroke="var(--primary)" stroke-width="2" class="map-gate-marker" data-gate="Gate C" style="cursor: pointer;"/>
+            <text x="250" y="510" fill="var(--text-primary)" font-size="10" font-weight="700" text-anchor="middle">Gate C</text>
+            
+            <circle cx="15" cy="250" r="14" fill="var(--bg-surface-elevated)" stroke="var(--danger)" stroke-width="2" class="map-gate-marker" data-gate="Gate D" style="cursor: pointer;"/>
+            <text x="-12" y="253" fill="var(--text-primary)" font-size="10" font-weight="700" text-anchor="middle">Gate D</text>
+            
+            <!-- Stadium Seats Ring (Interactive Sectors) -->
+            <!-- North Sector Arc -->
+            <path d="M 125,125 A 176,176 0 0,1 375,125 L 350,150 A 141,141 0 0,0 150,150 Z" 
+                  fill="var(--info)" opacity="0.6" class="map-sector-path" data-sector="north" style="cursor: pointer; transition: opacity 0.2s;" role="button" aria-label="North Stand Sector"/>
+            <text x="250" y="110" fill="var(--text-primary)" font-size="12" font-weight="700" text-anchor="middle" pointer-events="none">North Stand</text>
+            
+            <!-- East Sector Arc -->
+            <path d="M 375,125 A 176,176 0 0,1 375,375 L 350,350 A 141,141 0 0,0 350,150 Z" 
+                  fill="var(--accent)" opacity="0.6" class="map-sector-path" data-sector="east" style="cursor: pointer; transition: opacity 0.2s;" role="button" aria-label="East Stand Sector"/>
+            <text x="390" y="254" fill="var(--text-primary)" font-size="12" font-weight="700" text-anchor="middle" pointer-events="none" transform="rotate(90 390 254)">East Stand</text>
+
+            <!-- South Sector Arc -->
+            <path d="M 375,375 A 176,176 0 0,1 125,375 L 150,350 A 141,141 0 0,0 350,350 Z" 
+                  fill="var(--primary)" opacity="0.6" class="map-sector-path" data-sector="south" style="cursor: pointer; transition: opacity 0.2s;" role="button" aria-label="South Stand Sector"/>
+            <text x="250" y="400" fill="var(--text-primary)" font-size="12" font-weight="700" text-anchor="middle" pointer-events="none">South Stand</text>
+            
+            <!-- West Sector Arc -->
+            <path d="M 125,375 A 176,176 0 0,1 125,125 L 150,150 A 141,141 0 0,0 150,350 Z" 
+                  fill="var(--danger)" opacity="0.6" class="map-sector-path" data-sector="west" style="cursor: pointer; transition: opacity 0.2s;" role="button" aria-label="West Stand Sector"/>
+            <text x="110" y="254" fill="var(--text-primary)" font-size="12" font-weight="700" text-anchor="middle" pointer-events="none" transform="rotate(-90 110 254)">West Stand</text>
+            
+            <!-- Pitch (Center Field) -->
+            <rect x="170" y="190" width="160" height="120" rx="8" fill="hsl(142, 60%, 15%)" stroke="var(--primary)" stroke-width="2"/>
+            <!-- Goal Boxes -->
+            <rect x="170" y="225" width="20" height="50" fill="none" stroke="var(--primary)" stroke-width="1.5"/>
+            <rect x="310" y="225" width="20" height="50" fill="none" stroke="var(--primary)" stroke-width="1.5"/>
+            <circle cx="250" cy="250" r="24" fill="none" stroke="var(--primary)" stroke-width="1.5"/>
+            <circle cx="250" cy="250" r="3" fill="var(--primary)"/>
+            <text x="250" y="254" fill="var(--text-muted)" font-size="10" font-weight="600" text-anchor="middle" opacity="0.5">FIFA PITCH</text>
+          </svg>
+        </div>
+
+        <!-- Sidebar Info Box -->
+        <div class="calc-sidebar">
+          <div class="card" id="map-selection-card">
+            <h3 class="card-title">🔍 Sector Inspector</h3>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;">
+              Click on a stand or gate in the layout to view real-time operations, crowd status, and concession metrics.
+            </p>
+            <div id="inspector-placeholder" style="color:var(--text-muted); font-style:italic; font-size:0.85rem; border-top:1px dashed var(--border-color); padding-top:1rem;">
+              No sector or gate selected.
+            </div>
+            <div id="inspector-data-box" style="display:none; border-top:1px solid var(--border-color); padding-top:1rem;">
+              <h4 id="inspect-title" style="color:var(--accent); font-size:1.25rem; margin-bottom:0.5rem;">Sector Details</h4>
+              <ul style="padding-left: 1.25rem; font-size: 0.85rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 0.5rem; list-style:square;">
+                <li><strong>Crowd Status:</strong> <span id="inspect-status" class="badge">--</span></li>
+                <li><strong>Queue Wait:</strong> <span id="inspect-wait">--</span></li>
+                <li><strong>Accessibility:</strong> <span id="inspect-access">--</span></li>
+                <li><strong>Concessions:</strong> <span id="inspect-concession">--</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 3. SMART CHATBOT (AEGIS) VIEW ================= -->
     <section id="coach-view" class="view-panel" aria-labelledby="coach-title">
       <div class="assistant-layout">
         <!-- Interactive Chat Panel -->
         <div class="card chat-panel">
-          <h3 class="card-title">💬 Ask Eco - Carbon Coach</h3>
+          <h3 class="card-title" style="justify-content: space-between;">
+            <span>💬 Aegis Multilingual Assistant</span>
+            <span class="badge" id="ai-mode-status-badge" style="background: hsla(45, 100%, 50%, 0.15); border-color: var(--accent); color: var(--accent);">Local Mode</span>
+          </h3>
           
-          <div class="chat-messages" id="chat-messages-container" role="log" aria-live="polite" aria-label="Chat messages history">
+          <div class="chat-messages" id="chat-messages-container" role="log" aria-live="polite" aria-label="Aegis chat conversations">
             <!-- Programmatically injected messages -->
           </div>
 
-          <!-- Bottom suggest chips -->
-          <div class="chip-container" id="chat-suggestion-chips" aria-label="Suggested chat questions">
-            <button class="chip" type="button">Compare benchmarks</button>
-            <button class="chip" type="button">My highest emitter</button>
-            <button class="chip" type="button">Show eco-actions</button>
-            <button class="chip" type="button">General tips</button>
+          <!-- Suggestion chips (adapt dynamically) -->
+          <div class="chip-container" id="chat-suggestion-chips" aria-label="Suggested quick questions">
+            <!-- Suggestion buttons injected based on active role -->
           </div>
 
           <!-- Message entry controls -->
           <div class="chat-input-area" style="margin-top: 1rem;">
-            <input type="text" id="assistant-input-field" class="chat-input" placeholder="Ask about carbon reduction tips or formulas..." aria-label="Message carbon coach">
+            <input type="text" id="assistant-input-field" class="chat-input" placeholder="Ask about gates, accessibility, transit, or translations..." aria-label="Message Aegis">
             <button class="btn btn-primary" id="assistant-send-btn" type="button">Send</button>
           </div>
         </div>
@@ -466,30 +311,26 @@
         <!-- Sidebar dynamic coaching insights summary -->
         <div class="calc-sidebar">
           <div class="card">
-            <h3 class="card-title">💡 Contextual Coaching Insights</h3>
-            <div class="coaching-insights" id="coach-insights-sidebar">
-              <div class="insight-item">
-                <div class="insight-text">
-                  <div class="insight-header">Chat Active</div>
-                  Speak to Eco or check suggestion chips to receive immediate carbon coaching.
-                </div>
-              </div>
+            <h3 class="card-title">💡 Role Context</h3>
+            <p id="chat-role-desc" style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1rem;"></p>
+            <div style="font-size:0.8rem; background: var(--bg-surface-elevated); padding: 1rem; border-radius: var(--radius-sm); border:1px solid var(--border-color);">
+              <strong>Google Gemini Power:</strong> To test genuine generative AI answers, paste your Gemini API key in Settings.
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ================= ACTION PLANNER VIEW ================= -->
+    <!-- ================= 4. ACTION TRACKER VIEW ================= -->
     <section id="planner-view" class="view-panel" aria-labelledby="planner-title">
       <div class="calc-container">
         <!-- Grid of available actions -->
         <div>
-          <h3 style="margin-bottom: 0.5rem; font-size: 1.8rem;">Browse High-Impact Eco-Actions</h3>
-          <p style="color: var(--text-muted); margin-bottom: 2rem;">Commit to daily habits to lower your projected footprint.</p>
+          <h3 id="planner-title" style="margin-bottom: 0.5rem; font-size: 1.8rem;">Browse High-Impact Stadium Goals</h3>
+          <p id="planner-subtitle" style="color: var(--text-muted); margin-bottom: 2rem;">Commit to and complete match day tasks to maximize crowd safety, speed up lines, or offset carbon emissions.</p>
           
           <div class="action-grid" id="planner-action-list">
-            <!-- Action cards injected programmatically -->
+            <!-- Action cards injected programmatically based on role -->
           </div>
         </div>
 
@@ -505,48 +346,91 @@
       </div>
     </section>
 
-    <!-- ================= LEADERBOARD / BADGES VIEW ================= -->
-    <section id="rewards-view" class="view-panel" aria-labelledby="rewards-title">
-      <h2 id="rewards-title" style="margin-bottom: 2rem; font-size: 2.2rem; display: flex; align-items: center; gap: 0.5rem;">
-        <span>🏆</span> Achievements & Badges
+    <!-- ================= 5. TICKET VERIFIER VIEW ================= -->
+    <section id="verifier-view" class="view-panel" aria-labelledby="verifier-title">
+      <h2 id="verifier-title" style="margin-bottom: 0.5rem; font-size: 2.2rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span>🎟️</span> Secure Ticket Verifier
       </h2>
+      <p style="color: var(--text-muted); margin-bottom: 2rem;">Verify official FIFA World Cup 2026 tickets using our on-device cryptographic verification logic. Restrict entry of counterfeit codes.</p>
+      
+      <div class="calc-container">
+        <!-- Ticket inputs verifier form -->
+        <div class="card">
+          <h3 class="card-title">🛡️ Cryptographic Checker</h3>
+          <form id="ticket-verifier-form" onsubmit="return false;" style="display:flex; flex-direction:column; gap:1.25rem;">
+            <div class="form-group">
+              <label for="ticket-id" class="form-label">Ticket ID</label>
+              <input type="text" id="ticket-id" class="input-control" placeholder="WC2026-XXXX-XXXXX" required>
+              <span style="font-size:0.75rem; color:var(--text-muted);">Regex matched (Format: WC2026-XXXX-XXXXX where X is alphanumeric)</span>
+            </div>
+            
+            <div style="display:flex; gap:1rem;">
+              <div class="form-group" style="flex:1;">
+                <label for="ticket-match" class="form-label">Match ID</label>
+                <select id="ticket-match" class="select-control">
+                  <option value="Match 10">Match 10 (USA vs ENG)</option>
+                  <option value="Match 14">Match 14 (MEX vs GER)</option>
+                  <option value="Match 28">Match 28 (CAN vs BRA)</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label for="ticket-holder" class="form-label">Holder Name</label>
+                <input type="text" id="ticket-holder" class="input-control" placeholder="Full Name" required>
+              </div>
+            </div>
 
-      <div class="dash-grid" style="grid-template-columns: repeat(4, 1fr);">
-        <!-- Total XP points display card -->
-        <div class="card" style="grid-column: span 4; display: flex; align-items: center; justify-content: space-between;">
-          <div>
-            <h3 style="margin-bottom: 0.25rem;">Your Sustainability Rank</h3>
-            <p style="color: var(--text-secondary); font-size: 0.95rem;">Commit to and complete actions to earn XP points.</p>
-          </div>
-          <div style="font-size: 3rem; font-family: var(--font-display); font-weight: 800; color: var(--accent); text-shadow: 0 0 20px var(--accent-glow);">
-            <span id="rewards-xp-badge">0</span> XP
+            <div style="display:flex; gap:1rem;">
+              <div class="form-group" style="flex:1;">
+                <label for="ticket-sector" class="form-label">Sector</label>
+                <select id="ticket-sector" class="select-control">
+                  <option value="North Stand">North Stand</option>
+                  <option value="East Stand">East Stand</option>
+                  <option value="South Stand">South Stand</option>
+                  <option value="West Stand">West Stand</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label for="ticket-gate" class="form-label">Gate Allocation</label>
+                <select id="ticket-gate" class="select-control">
+                  <option value="Gate A">Gate A (North)</option>
+                  <option value="Gate B">Gate B (East)</option>
+                  <option value="Gate C">Gate C (South)</option>
+                  <option value="Gate D">Gate D (West)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="ticket-seat" class="form-label">Seat Details</label>
+              <input type="text" id="ticket-seat" class="input-control" placeholder="e.g. Row 12, Seat 4" required>
+            </div>
+
+            <div class="form-group">
+              <label for="ticket-signature" class="form-label">Cryptographic Signature Hash</label>
+              <input type="text" id="ticket-signature" class="input-control" placeholder="8-char Hex signature string" required>
+              <span style="font-size:0.75rem; color:var(--text-muted);">Simulated checksum hash validates integrity and prevents counterfeiting.</span>
+            </div>
+
+            <button class="btn btn-primary" id="btn-verify-ticket" type="button" style="padding:0.75rem; font-size:1rem;">🔐 Verify Ticket Authenticity</button>
+          </form>
+          
+          <!-- Verification Results Output -->
+          <div id="verifier-output-card" class="card" style="display:none; margin-top:1.5rem; background: var(--bg-surface-elevated);">
+            <!-- Dynamic verified message -->
           </div>
         </div>
 
-        <!-- Badges list grid -->
-        <div class="card" style="grid-column: span 4;">
-          <h3 class="card-title">🌱 Earned Badges</h3>
-          <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Unlock special visual badges by hitting footprint targets and completing eco challenges.</p>
-          
-          <div class="badge-grid">
-            <div class="badge-item" data-badge-id="first-steps" aria-label="First Steps Badge: Complete calculator profiling">
-              <span class="badge-icon" aria-hidden="true">🌱</span>
-              <span class="badge-name">First Steps</span>
-            </div>
+        <!-- Testing generator helper -->
+        <div class="calc-sidebar">
+          <div class="card" style="background: radial-gradient(circle at top left, hsla(45, 100%, 10%, 0.15), transparent);">
+            <h3 class="card-title">💡 Developer Ticket Generator</h3>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1rem;">
+              Generate a test ticket with a valid simulated signature hash to copy and paste into the checker.
+            </p>
+            <button class="btn btn-secondary" id="btn-generate-test-ticket" type="button" style="width:100%; padding:0.5rem; margin-bottom:1rem;">🎫 Generate Test Ticket</button>
             
-            <div class="badge-item" data-badge-id="carbon-saver" aria-label="Carbon Saver Badge: Commit to an eco-action">
-              <span class="badge-icon" aria-hidden="true">♻️</span>
-              <span class="badge-name">Carbon Saver</span>
-            </div>
-            
-            <div class="badge-item" data-badge-id="eco-warrior" aria-label="Eco Warrior Badge: Get footprint below 4.5 tons">
-              <span class="badge-icon" aria-hidden="true">🛡️</span>
-              <span class="badge-name">Eco Warrior</span>
-            </div>
-            
-            <div class="badge-item" data-badge-id="climate-hero" aria-label="Climate Hero Badge: Meet Paris target of 2.0 tons">
-              <span class="badge-icon" aria-hidden="true">🥇</span>
-              <span class="badge-name">Climate Hero</span>
+            <div id="test-ticket-display" style="display:none; background: var(--bg-surface); padding: 0.75rem; border-radius: var(--radius-sm); border:1px dashed var(--border-color); font-size: 0.8rem; font-family: monospace;">
+              <!-- Code injected programmatically -->
             </div>
           </div>
         </div>
@@ -555,15 +439,53 @@
 
   </main>
 
+  <!-- --- SETTINGS MODAL (GEMINI CONFIGURATION) --- -->
+  <div class="modal-overlay" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+    <div class="card modal-container">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; border-bottom:1px solid var(--border-color); padding-bottom:0.75rem;">
+        <h3 id="settings-modal-title">⚙️ Secure Settings Panel</h3>
+        <button id="btn-settings-close" class="btn-close-modal" type="button" aria-label="Close settings modal">×</button>
+      </div>
+      
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <label for="settings-gemini-key" class="form-label">Google Gemini API Key</label>
+        <input type="password" id="settings-gemini-key" class="input-control" placeholder="AIzaSy...">
+        <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">
+          Your key is saved solely inside local browser storage and is never uploaded. Calls are made directly to Google API endpoints.
+        </p>
+      </div>
+
+      <div style="display:flex; gap:1rem; margin-bottom:1.5rem;">
+        <div class="form-group" style="flex:1;">
+          <label for="settings-model" class="form-label">Gemini Model Choice</label>
+          <select id="settings-model" class="select-control">
+            <option value="gemini-2.5-flash">gemini-2.5-flash (Recommended)</option>
+            <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label for="settings-temp" class="form-label">Temperature</label>
+          <input type="number" id="settings-temp" class="input-control" min="0" max="1" step="0.1" value="0.7">
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; border-top:1px solid var(--border-color); padding-top:1rem;">
+        <button class="btn btn-secondary" id="btn-settings-clear" type="button">Clear Key</button>
+        <button class="btn btn-primary" id="btn-settings-save" type="button">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
   <!-- --- FOOTER --- -->
   <footer>
     <div class="footer-content">
       <div class="footer-text">
-        &copy; 2026 EcoPulse Carbon Intelligence. Built for high security, data privacy, and modern sustainability modeling.
+        &copy; 2026 ArenaPulse AI Stadium Intelligence. FIFA World Cup 2026 tournament operations support.
       </div>
       <div class="footer-text" style="display: flex; gap: 1rem;">
         <span>MIT License</span>
-        <span>Secure Local storage Mode</span>
+        <span>Secure Sandboxed Mode</span>
+        <span id="pwa-badge" style="color:var(--success);">PWA Caching Enabled</span>
       </div>
     </div>
   </footer>

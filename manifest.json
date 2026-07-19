@@ -1,11 +1,11 @@
 {
-  "name": "EcoPulse Carbon Intelligence",
-  "short_name": "EcoPulse",
-  "description": "Understand, track, and reduce your carbon footprint with a smart sustainability assistant.",
+  "name": "ArenaPulse AI Stadium Intelligence",
+  "short_name": "ArenaPulse",
+  "description": "Enhancing stadium operations and the fan experience for the FIFA World Cup 2026.",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#040b11",
-  "theme_color": "#10b981",
+  "background_color": "#05030d",
+  "theme_color": "#8b5cf6",
   "icons": [
     {
       "src": "./icon.svg",
