@@ -1,39 +1,38 @@
-# ArenaPulse AI — FIFA World Cup 2026 Smart Stadium Platform
+# ArenaPulse AI — FIFA World Cup 2026 Central Operations Command
 
-ArenaPulse AI is a professional, high-security, GenAI-enabled stadium operations and fan analytics Single Page Application (SPA) designed to enhance the tournament experience during the **FIFA World Cup 2026** at MetLife Stadium. 
+ArenaPulse AI is a professional, high-security, GenAI-enabled stadium operations and crowd management Single Page Application (SPA) designed to enhance the tournament experience during the **FIFA World Cup 2026** at MetLife Stadium. 
 
-Built using official Google tools (Google Gemini API Web SDK, Google Maps JavaScript API, Google Fonts), the platform provides real-time operational command, crowd bottleneck predictions, inclusive accessibility routing, sustainable transit planners, cashless food ordering, and secure ticket verifications.
+Built using official Google tools (Google Gemini API Web SDK, Google Maps JavaScript API, Google Fonts), the platform provides real-time operational command, crowd bottleneck predictions, inclusive accessibility routing, radio incident alerts dispatch logs, secure checkpoint inspections, and multilingual translations.
 
 ---
 
-## 🎯 Chosen Vertical & Persona (Portal Login System)
-ArenaPulse AI is structured around a secure **Credential Portal Login** screen. Users sign in to access specific layouts:
-1. **The Tournament Fan (`fan@fifa.com`)**: Accesses carbon-offset transit planners, seating tier privilege cards, live gate queue estimates, and a cashless sustainable food concessions ordering system.
-2. **The Volunteer Staff (`volunteer@fifa.com`)**: Conducts safety sweeps, lost child alerts, crowd dispersion lane checks, and logs live stadium incidents.
-3. **The Venue Organizer (`organizer@fifa.com`)**: Reviews global capacity overviews, active operations command logs, live SVG congestion analytics, and runs Aegis GenAI incident synthesis reports.
-
-*For evaluation, the landing login card provides three **Fast-Track Gateways** (Fan, Volunteer, Operations buttons) to log in instantly.*
+## 🎯 Chosen Persona (Operations Command Console)
+ArenaPulse AI is structured around a single, focused persona: **The MetLife Operations Commander**. The application opens directly into the premium Operations Central Command Console, eliminating multi-persona login gates and feature bloat:
+* **Target Verticals**: Crowd Management & Real-Time Decision Support.
+* **GenAI Reasoning**: Analyzes active checkpoint queues and unstructured safety incident streams, compiles prioritized dispatch plans, drafts emergency procedures, and coordinates marshal teams.
 
 ---
 
 ## 🛠️ Key Platform Features
 
-### 1. Secure Cashless Food Concessions Ordering
-* Fans compile orders from an organic menu of sustainable eats (Eco-Pitmaster Burger, Plant Hot Dog, Zero-Waste Pretzel, Organic Lemonade).
-* Features a simulated cashless payment gateway that generates secure cryptographic transaction signatures and logs volunteer/fan XP.
+### 1. Interactive Multilingual Command Translator
+* Renders a dedicated translation card directly on the Central Command dashboard.
+* Commanders input foreign-language volunteer logs, fan scan disputes, or radio messages and select a target language (English, Spanish, French, German, Portuguese).
+* Employs live Google Gemini AI to translate the messages instantly, resolving operational language barriers.
+* Reverts to a local matching simulation pattern if no API key is active.
 
-### 2. Dynamic Google Maps JavaScript API Integration
+### 2. Dynamic Google Maps Checkpoint Integration
 * Dynamically loads a live Google Map centered at MetLife Stadium when a Google Maps API Key is entered in settings.
-* Draws custom color-coded markers (Green/Orange/Red) representing live Gate queue congestion wait times derived from active stadium state logs.
+* Draws custom color-coded markers (Green/Orange/Red) representing live entry Gate queue congestion wait times derived from active stadium state logs.
 * Automatically reverts to a beautiful vector SVG layout if no key is present.
 
-### 3. On-Device Cryptographic Ticket Verifier (`operations.js`)
-* Standard tickets are parsed against format checks (matching the `WC2026-[A-Z0-9]{4}-[A-Z0-9]{5}` regex).
+### 3. Checkpoint Ticket Inspector (`operations.js`)
+* Standard ticket barcodes are parsed against format checks (matching the `WC2026-[A-Z0-9]{4}-[A-Z0-9]{5}` regex).
 * Each valid ticket is validated by computing a simulated SHA/HMAC hash of its contents: `ticketId + matchNumber + holderName + sector + gate + seat` concatenated with a secure salt.
 * **Refined Seating Tiers**: Using binary search ($O(\log N)$) row boundary lookups, the verifier determines ticketing privileges (VIP lounge access, concession discounts) and recommended gate entrances, displaying them in a stylized access badge.
 
-### 4. Smart Multilingual Assistant "Aegis" (`assistant.js`)
-* **Google Gemini AI Mode**: Connects to the official `@google/generative-ai` Web SDK client-side, running queries against the `gemini-2.5-flash` model. Uses targeted system instructions configured for the active logged-in role.
+### 4. Smart Command Assistant "Aegis" (`assistant.js`)
+* **Google Gemini AI Mode**: Connects to the official `@google/generative-ai` Web SDK client-side, running queries against the `gemini-2.5-flash` model. Uses targeted system instructions configured for command operations.
 * **Incident Synthesizer**: Classifies risk levels (Critical to Low) and safety priorities from unstructured volunteer reports, drafting coordination plans.
 * **Offline Fallback Simulator**: Uses keyword matching rules to return context-specific answers if the device is offline or no key is present.
 

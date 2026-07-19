@@ -119,6 +119,32 @@
             <button class="btn btn-primary" type="submit" style="padding: 0.6rem; font-family: var(--font-display); font-weight:700;">📢 Register & Alert Teams</button>
           </form>
         </div>
+
+        <!-- Multilingual Command Translator Card -->
+        <div class="card card-full" style="margin-top: 1rem;">
+          <h3 class="card-title">🌐 Multilingual Command Translator</h3>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">Translate foreign volunteer logs, fan scan disputes, or broadcast emergency alerts between stadium languages instantly using Gemini AI.</p>
+          <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:1rem; align-items: flex-end; flex-wrap:wrap;">
+            <div class="form-group" style="margin:0;">
+              <label for="translation-input" class="form-label" style="font-size: 0.8rem;">Text to Translate</label>
+              <input type="text" id="translation-input" class="input-control" placeholder="e.g. Un derrame de agua en el sector norte requiere limpieza..." required>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label for="translation-lang" class="form-label" style="font-size: 0.8rem;">Target Language</label>
+              <select id="translation-lang" class="select-control">
+                <option value="English">English</option>
+                <option value="Spanish (Español)">Spanish (Español)</option>
+                <option value="French (Français)">French (Français)</option>
+                <option value="German (Deutsch)">German (Deutsch)</option>
+                <option value="Portuguese (Português)">Portuguese (Português)</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" id="btn-translate-submit" type="button" style="padding: 0.6rem; font-family: var(--font-display); font-weight:700;">✨ Translate Text</button>
+          </div>
+          <div id="translation-output-card" style="display:none; background: hsla(196, 95%, 48%, 0.05); border: 1px solid var(--info); padding: 1rem; border-radius: var(--radius-sm); margin-top: 1rem; font-size: 0.85rem; line-height: 1.5;">
+            <!-- Translated text dynamically loaded here -->
+          </div>
+        </div>
       </div>
 
       <!-- Operational Insights Summary Feed -->

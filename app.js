@@ -1,7 +1,7 @@
 /* global atob, google */
 import { verifyTicket, generateTicketSignature, findSeatTier, binarySearchIncidents } from './operations.js';
 import { renderDonutChart, renderBenchmarkChart } from './chart.js';
-import { getCoachResponse, getDashboardInsights, getIncidentSynthesis } from './assistant.js';
+import { getCoachResponse, getDashboardInsights, getIncidentSynthesis, getTranslation } from './assistant.js';
 
 // Base64 Obfuscated default key to prevent search exposure & push blocks
 const OBFUSCATED_KEY = atob("QVEuQWI4Uk42SlJ3UUQ1REdyUHhDQnZRaTdlUnhiSGpSUEFnVVMyUlRuSUhiNXJyNy1LR1E=");
@@ -50,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
   try { initChatbot(); } catch (e) { console.error("initChatbot error:", e); }
   try { initInteractiveMap(); } catch (e) { console.error("initInteractiveMap error:", e); }
   try { initAiAlertSynthesizer(); } catch (e) { console.error("initAiAlertSynthesizer error:", e); }
+  try { initTranslationHandlers(); } catch (e) { console.error("initTranslationHandlers error:", e); }
   
   // Register Service Worker for PWA cache management
   if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
@@ -835,5 +836,44 @@ function renderInsights() {
       <span style="font-size:0.8rem; color:var(--text-secondary);">${insight.text}</span>
     `;
     container.appendChild(item);
+  });
+}
+
+// --- MULTILINGUAL TRANSLATION HANDLERS ---
+function initTranslationHandlers() {
+  const btnTranslate = document.getElementById('btn-translate-submit');
+  const inputEl = document.getElementById('translation-input');
+  const langSelect = document.getElementById('translation-lang');
+  const outputCard = document.getElementById('translation-output-card');
+
+  if (!btnTranslate || !inputEl || !langSelect || !outputCard) return;
+
+  btnTranslate.addEventListener('click', async () => {
+    const text = inputEl.value.trim();
+    const targetLang = langSelect.value;
+
+    if (!text) {
+      alert("Please enter text to translate.");
+      return;
+    }
+
+    outputCard.style.display = 'block';
+    outputCard.innerHTML = `
+      <span style="display:flex; align-items:center; gap:0.5rem; color:var(--accent);">
+        <span class="typing-dot" style="background:var(--accent);"></span>
+        Aegis Translation engine performing GenAI synthesis...
+      </span>
+    `;
+
+    try {
+      const result = await getTranslation(text, targetLang, state.geminiApiKey);
+      outputCard.innerHTML = `
+        <strong style="color:var(--info); font-size:0.9rem; display:block; margin-bottom:0.4rem;">🌐 Translation Output (${targetLang})</strong>
+        <p style="margin:0; font-style:italic;">${result}</p>
+      `;
+    } catch (err) {
+      console.error(err);
+      outputCard.innerHTML = `<span style="color:var(--danger);">Failed to complete translation. Check API connectivity or logs.</span>`;
+    }
   });
 }
