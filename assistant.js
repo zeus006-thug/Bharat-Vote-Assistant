@@ -238,7 +238,7 @@ export function getDashboardInsights(state = {}) {
     if (ticketVerified) {
       insights.push({
         title: "Ticket Verified Successfully",
-        text: `You are booked in Sector ${state.ticketInfo.sector} (${state.ticketInfo.tier}). We recommend entering via ${state.ticketInfo.gate} which currently has low wait times.`,
+        text: `You are booked in Sector ${state.ticketInfo.sector} (${(state.ticketInfo.tier && state.ticketInfo.tier.name) || 'Standard Seating'}). We recommend entering via ${state.ticketInfo.gate} which currently has low wait times.`,
         type: "positive"
       });
     } else {

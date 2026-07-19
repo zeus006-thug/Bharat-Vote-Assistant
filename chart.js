@@ -209,7 +209,7 @@ export function renderBenchmarkChart(containerId, queueData) {
   const chartX = 100;
   const chartWidth = 260;
   // Maximum scale baseline: at least 30 mins to avoid giant bars for tiny times
-  const maxValue = Math.max(30, ...gates.map(g => g.value) * 1.1);
+  const maxValue = Math.max(30, ...gates.map(g => g.value)) * 1.1;
 
   let barY = 15;
 

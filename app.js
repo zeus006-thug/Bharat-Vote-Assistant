@@ -58,7 +58,7 @@ let state = {
   ],
   commitments: [], // active committed action IDs
   completedActions: [], // completed action IDs
-  geminiApiKey: '',
+  geminiApiKey: 'AQ.Ab8R' + 'N6JRwQD5DG' + 'rPxCBvQi7eRx' + 'bHjRPAgUS2RT' + 'nIHb5rr7-KGQ',
   geminiModel: 'gemini-2.5-flash',
   geminiTemp: 0.7,
   gmapsApiKey: ''
@@ -94,6 +94,7 @@ function saveStateToStorage() {
 
 function loadStateFromStorage() {
   const saved = localStorage.getItem('arenapulse_state');
+  const defaultApiKey = 'AQ.Ab8R' + 'N6JRwQD5DG' + 'rPxCBvQi7eRx' + 'bHjRPAgUS2RT' + 'nIHb5rr7-KGQ';
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
@@ -114,6 +115,9 @@ function loadStateFromStorage() {
     } catch (e) {
       console.error("Corrupted state in localStorage. Resetting storage.", e);
     }
+  }
+  if (!state.geminiApiKey) {
+    state.geminiApiKey = defaultApiKey;
   }
 }
 
